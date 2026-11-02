@@ -1,0 +1,105 @@
+/* Clone review pages. Colours come from the .shell tokens in
+   components/structure/structure.module.css. */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 0 1.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.tabs a {
+  padding: 0.45rem 0.9rem;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.tabs a:hover {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.tabs a[aria-current="page"] {
+  border-bottom-color: var(--ink);
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.members {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 1rem;
+}
+
+.member {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.memberHead {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--rule);
+  overflow-wrap: anywhere;
+}
+
+.memberHead span + span {
+  margin-left: 0.4rem;
+}
+
+.source {
+  flex: 1;
+  margin: 0;
+  max-height: 32rem;
+  padding: 0.75rem 0.9rem;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.missing {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.waive {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+
+.review {
+  max-width: 40rem;
+}
+
+.reason {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.reason:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 0;
+  border-color: var(--link);
+}
