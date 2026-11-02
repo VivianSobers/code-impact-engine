@@ -48,4 +48,44 @@ BEGIN
     END IF;
 END $$;
 
+-- commit
+
+INSERT INTO repository (name, url) VALUES ('history fixture', 'test://history');
+
+CREATE FUNCTION pg_temp.repo() RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT repo_id FROM repository WHERE url = 'test://history'
+$$;
+
+CREATE FUNCTION pg_temp.author(p_name text) RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT author_id FROM author WHERE name = p_name
+$$;
+
+INSERT INTO commit (repo_id, author_id, sha, message, committed_at)
+VALUES
+    (pg_temp.repo(), pg_temp.author('Ana Ruiz'), repeat('a', 40), 'Apply discount codes at checkout', '2026-09-01 10:00+05:30'),
+    (pg_temp.repo(), pg_temp.author('Ben Okafor'), repeat('b', 40), 'Round currency values', '2026-09-02 10:00+05:30');
+
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO commit (repo_id, author_id, sha, message, committed_at) VALUES (%s, %s, 'XYZ', 'bad sha', now())$q$,
+    pg_temp.repo(), pg_temp.author('Ana Ruiz')), '23514', 'commit_sha_format');
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO commit (repo_id, author_id, sha, message, committed_at) VALUES (%s, %s, %L, 'again', now())$q$,
+    pg_temp.repo(), pg_temp.author('Ana Ruiz'), repeat('a', 40)), '23505', 'commit_repo_sha_key');
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO commit (repo_id, author_id, sha, message, committed_at) VALUES (%s, NULL, %L, 'no author', now())$q$,
+    pg_temp.repo(), repeat('c', 40)), '23502');
+
+DO $$
+BEGIN
+    IF (SELECT array_agg(message) FROM commit WHERE message_search @@ plainto_tsquery('english', 'discount'))
+        IS DISTINCT FROM ARRAY['Apply discount codes at checkout'] THEN
+        RAISE EXCEPTION 'message search should find the discount commit only';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM commit WHERE message_search @@ plainto_tsquery('english', 'rounding')) THEN
+        RAISE EXCEPTION 'message search should stem rounding to round';
+    END IF;
+END $$;
+
 ROLLBACK;
