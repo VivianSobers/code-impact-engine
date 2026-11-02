@@ -38,3 +38,7 @@ These folders get created as the work lands.
 
 Setup and run instructions will go here once `docker-compose.yml` and the Next.js app exist. Database credentials come from environment variables. Copy `.env.example` to `.env` and fill it in; `.env` is git-ignored.
 
+## Documentation
+
+- [ER diagram and relational schema](docs/ER_Relational_Schema.pdf)
+- [Work split between team members](docs/WORK_SPLIT.md)
