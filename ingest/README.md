@@ -138,6 +138,30 @@ Commits are grouped into people when they share a name (ignoring case and spacin
 
 Running the step again replaces the repository's commits and changes in one transaction. Authors are shared between repositories, so they are only added or updated. Re-running the parser deletes the repository's symbols and with them its `modifies` rows, so run `history` again after `parse`.
 
+## Embeddings and clones
+
+```
+npm run embed -- seed-repo
+```
+
+`embed/` runs after the parser. It embeds every function and method of four or more lines with [jina-embeddings-v2-base-code](https://huggingface.co/jinaai/jina-embeddings-v2-base-code), run locally through `@huggingface/transformers` (8-bit weights, 768 dimensions, mean pooling, unit length). The first run downloads the model, about 160 MB, into `.cache/models` at the project root. The last line on stdout is a JSON summary:
+
+```
+{"repoId":3,"symbols":162,"embedded":162,"reused":0,"clusters":12,"durationMs":27523}
+```
+
+The text embedded is the symbol's own source lines, cut at 4000 characters. Vectors go into `symbol_embedding` (pgvector, HNSW index with cosine distance), one row per model and SHA-256 of that text, and `symbol.embedding_id` points at it. Identical bodies share a vector, and running the step again, or after a re-parse, only embeds bodies that changed: the second run on express embedded nothing and took under half a second.
+
+Clone detection then rebuilds the repository's open clusters in one transaction:
+
+1. For each symbol, pgvector returns its five nearest neighbours by cosine distance. Neighbours with similarity of at least 0.70 are candidates.
+2. A candidate is a clone when the two bodies have the same token structure: keywords and punctuation in the same order, with names, strings and numbers blanked out, scoring at least 0.85 (twice the longest common subsequence over the total length).
+3. Clones connected through each other form one cluster. `clone_cluster.similarity_score` is the lowest cosine similarity between linked members.
+
+The structure check is there because embeddings measure what code does more than how it is written. On express, copies that only rename things scored 0.78 to 0.84 cosine, the same range as unrelated functions with a similar job (`restrict` and `andRestrictToSelf` scored 0.78). Their structure scores were 0.96 to 1.0 against 0.79 for that pair. With these thresholds express gets 12 clusters covering 56 symbols, and all 10 clusters read by hand in a random sample were real copy-and-adapt duplicates. That is one reviewer's reading of one repository, not a measured precision, and clones the embedding search does not rank in the top five are missed.
+
+Symbols in confirmed or dismissed clusters, and symbols someone has waived, are left out when clusters are rebuilt, so a review is not undone by the next run.
+
 ## Seed repository
 
 ```
@@ -166,7 +190,7 @@ npm test
 npm run typecheck
 ```
 
-`npm test` runs the test files one at a time, because the parser and history integration tests both rebuild `workdir/seed-repo`. The unit tests need no database. The integration test builds the seed repo and ingests it twice into Postgres database `cie_t_ingest` and Mongo database `cie_t_ingest`, applying `db/schema` and `db/functions` first if the tables are missing. It skips with a message when either database is unreachable. Override the targets with `INGEST_TEST_DATABASE_URL`, `INGEST_TEST_MONGODB_URI` and `INGEST_TEST_MONGODB_DB`. The history integration test uses its own database `cie_t_history` on the same server (`INGEST_TEST_SERVER_URL`, default `postgresql://cie:change-me@localhost:5432`) and creates it when it is missing, so it only skips when the server itself is unreachable.
+`npm test` runs the test files one at a time, because the parser and history integration tests both rebuild `workdir/seed-repo`. The unit tests need no database. The integration test builds the seed repo and ingests it twice into Postgres database `cie_t_ingest` and Mongo database `cie_t_ingest`, applying `db/schema` and `db/functions` first if the tables are missing. It skips with a message when either database is unreachable. Override the targets with `INGEST_TEST_DATABASE_URL`, `INGEST_TEST_MONGODB_URI` and `INGEST_TEST_MONGODB_DB`. The history and embedding integration tests use their own databases, `cie_t_history` and `cie_t_embed`, on the same server (`INGEST_TEST_SERVER_URL`, default `postgresql://cie:change-me@localhost:5432`) and create them when they are missing, so they only skip when the server itself is unreachable. The embedding tests load the real model.
 
 ## Limitations
 

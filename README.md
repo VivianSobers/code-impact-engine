@@ -60,10 +60,11 @@ cd ingest
 npm install
 npm run seed
 npm run history -- seed-repo
+npm run embed -- seed-repo
 cd ..
 ```
 
-`npm run seed` parses the seed repository and `npm run history` reads its commits. For another repository, run `npm run parse -- <git-url-or-path>` and then `npm run history -- <name>`; see [ingest/README.md](ingest/README.md).
+`npm run seed` parses the seed repository, `npm run history` reads its commits and `npm run embed` embeds its functions and finds duplicated code. The first `embed` downloads the embedding model (about 160 MB). For another repository, run `npm run parse -- <git-url-or-path>`, then `npm run history -- <name>` and `npm run embed -- <name>`; see [ingest/README.md](ingest/README.md).
 
 Run the app:
 
