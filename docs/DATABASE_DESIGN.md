@@ -93,12 +93,15 @@ Types are PostgreSQL 16 types. "PK" is the primary key, "FK" a foreign key.
 | kind | text | no | | one of function, method, class, interface, enum, module | What kind of declaration it is. |
 | signature | text | yes | | | Declaration header on one line, for display and search. |
 | start_line | integer | no | | >= 1 | First line, 1-based. |
-| end_line | integer | no | | >= start_line | Last line. A trigger also checks it against file.loc. |
+| end_line | integer | no | | >= start_line, <= file.loc (trigger) | Last line. |
 | is_entry_point | boolean | no | false | | True when the symbol is reached from outside the repo, such as `main`, a route handler, or an exported function nothing in the repo calls. Impact analysis reports these separately. |
 | embedding_id | bigint | yes | | FK added in Vivian's DDL | Row in the embedding table. |
 | cluster_id | bigint | yes | | FK to clone_cluster, added in Vivian's DDL | Clone cluster the symbol belongs to. |
+| search_vector | tsvector | yes | generated, stored | | Name and signature split into words for full-text search. `getUserById` is indexed as `getuserbyid`, `get`, `user`, `by` and `id`. Name words get weight A and signature words weight B. Defined in [11_symbol_search.sql](../db/schema/11_symbol_search.sql). |
 
-Other constraints: UNIQUE (repo_id, path, kind, name, start_line). Indexes on name and a partial index on repo_id where is_entry_point.
+Other constraints: UNIQUE (repo_id, path, kind, name, start_line). Indexes on name, a partial index on repo_id where is_entry_point, and a GIN index on search_vector.
+
+Two triggers keep spans inside their files, since a CHECK cannot read another table. `symbol_within_file` runs before a symbol is inserted, or before its span or file changes, and rejects an end_line past the file's loc. `file_keeps_symbols` rejects lowering a file's loc below a symbol it already holds. Both raise `check_violation` with constraint name `symbol_within_file`. They are in [22_symbol_span_trigger.sql](../db/functions/22_symbol_span_trigger.sql).
 
 ### calls
 
@@ -121,6 +124,14 @@ Index on callee_id, because impact analysis walks the table from callee to calle
 | imported_path | text | no | | PK, part of the same FK | File being imported. |
 
 A CHECK stops a file from importing itself. Imports of third-party packages are not stored because they have no FILE row. Index on (imported_repo_id, imported_path) for "who imports this file".
+
+### Stored functions
+
+| Function | Returns | Purpose |
+|---|---|---|
+| `impact_of(p_symbol_id bigint, p_max_depth integer DEFAULT 5)` | symbol_id, repo_id, path, name, kind, depth, is_entry_point, min_confidence, call_path | Every symbol that calls the target directly or through other calls, up to p_max_depth levels. Each symbol appears once, at its shallowest depth. call_path lists the symbol IDs from the affected symbol down to the target, and min_confidence is the weakest call on that path. Raises 22023 for a depth outside 1 to 50 and P0002 for an unknown symbol. |
+| `search_symbols(p_query text, p_repo_id bigint DEFAULT NULL, p_limit integer DEFAULT 50)` | symbol_id, repo_id, path, name, kind, signature, start_line, end_line, rank | Ranked full-text search over search_vector. Each word of the query matches as a prefix, so `get user` finds `getUserById`. |
+| `symbol_name_parts(text)` | text | Splits camelCase, PascalCase and snake_case into words. Used by search_vector. |
 
 ### History, similarity and access tables
 
