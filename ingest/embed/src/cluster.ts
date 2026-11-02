@@ -9,9 +9,15 @@ export interface Cluster {
   similarity: number;
 }
 
-// Symbols at least this similar (cosine) to a neighbour are treated as clones.
-export const CLONE_THRESHOLD = 0.95;
-// How many nearest neighbours of each symbol are checked against the threshold.
+// Clone detection has two steps. pgvector finds each symbol's nearest neighbours by
+// cosine similarity of their embeddings; a neighbour at least CANDIDATE_SIMILARITY away
+// is a candidate. A candidate is a clone when the token structure of the two bodies is
+// at least CLONE_STRUCTURE alike (see structure.ts). On express, renamed copies scored
+// 0.78-0.84 cosine, as low as unrelated functions with a similar purpose, while their
+// structure scored 0.96-1.0 against 0.79 for the closest non-copy.
+export const CANDIDATE_SIMILARITY = 0.7;
+export const CLONE_STRUCTURE = 0.85;
+// How many nearest neighbours of each symbol are considered.
 export const NEIGHBOURS = 5;
 // Bodies shorter than this many lines are too small to call duplicates.
 export const MIN_LINES = 4;
