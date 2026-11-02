@@ -2,7 +2,7 @@ import type { SessionUser } from "./session";
 
 export type Access = "allow" | "login" | 401 | 403;
 
-const PUBLIC = [/^\/login$/, /^\/logout$/, /^\/_next\//, /^\/favicon\.ico$/];
+const PUBLIC = [/^\/login$/, /^\/logout$/, /^\/api\/session$/, /^\/_next\//, /^\/favicon\.ico$/];
 
 function under(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
