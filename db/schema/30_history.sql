@@ -7,6 +7,8 @@ CREATE TABLE author (
 );
 
 -- Email is a multivalued attribute of AUTHOR. One address belongs to one author.
+-- Git does not require the email field to hold an address, and real histories contain
+-- bare names there, so the format only rules out spaces, a missing value and extra @.
 CREATE TABLE author_email (
     author_id bigint NOT NULL,
     email     text   NOT NULL,
@@ -15,7 +17,7 @@ CREATE TABLE author_email (
     CONSTRAINT author_email_author_fkey FOREIGN KEY (author_id)
         REFERENCES author (author_id) ON DELETE CASCADE,
     CONSTRAINT author_email_lowercase CHECK (email = lower(email)),
-    CONSTRAINT author_email_format CHECK (email ~ '^[^@\s]+@[^@\s]+$')
+    CONSTRAINT author_email_format CHECK (email ~ '^[^@\s]+(@[^@\s]+)?$')
 );
 
 -- "commit" is an unreserved keyword in Postgres, so it works as a table name unquoted.
