@@ -7,11 +7,12 @@
 It uses only Node's built-in test runner and `fetch`, so there is nothing to install.
 
 ```sh
-node --test tests/structure/api.test.mjs
+CIE_TEST_USERNAME=ana CIE_TEST_PASSWORD=... node --test tests/structure/api.test.mjs
 ```
 
 Environment variables:
 
+- `CIE_TEST_USERNAME` and `CIE_TEST_PASSWORD` are a user of the app. The test signs in through `POST /api/session` before calling anything. Use an admin when `INGEST_SOURCE` is set, since only admins can add repositories.
 - `BASE_URL` is the server to test. The default is `http://localhost:3000`.
 - `INGEST_SOURCE` is a Git URL or absolute path. When set, the test also adds that repository with `POST /api/repositories`. When unset, that one test is skipped, so a normal run writes nothing to the database.
 
