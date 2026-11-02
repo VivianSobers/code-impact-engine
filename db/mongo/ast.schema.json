@@ -1,0 +1,67 @@
+{
+  "bsonType": "object",
+  "required": [
+    "repo_id",
+    "path",
+    "language",
+    "content_hash",
+    "parser",
+    "parsed_at",
+    "loc",
+    "node_count",
+    "max_depth",
+    "truncated",
+    "nodes"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_id": { "bsonType": "objectId" },
+    "repo_id": { "bsonType": ["int", "long"], "minimum": 1 },
+    "path": { "bsonType": "string", "minLength": 1, "pattern": "^[^/\\\\][^\\\\]*$" },
+    "language": { "enum": ["javascript", "typescript", "python", "java", "go"] },
+    "content_hash": { "bsonType": "string", "pattern": "^[0-9a-f]{64}$" },
+    "parser": {
+      "bsonType": "object",
+      "required": ["name", "grammar"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "enum": ["tree-sitter"] },
+        "grammar": { "bsonType": "string", "minLength": 1 }
+      }
+    },
+    "parsed_at": { "bsonType": "date" },
+    "loc": { "bsonType": ["int", "long"], "minimum": 0 },
+    "node_count": { "bsonType": ["int", "long"], "minimum": 0, "maximum": 50000 },
+    "max_depth": { "bsonType": ["int", "long"], "minimum": 0 },
+    "truncated": { "bsonType": "bool" },
+    "nodes": {
+      "bsonType": "array",
+      "maxItems": 50000,
+      "items": {
+        "bsonType": "object",
+        "required": ["i", "p", "t", "d", "f", "s", "e", "n"],
+        "additionalProperties": false,
+        "properties": {
+          "i": { "bsonType": "int", "minimum": 0 },
+          "p": { "bsonType": "int", "minimum": -1 },
+          "t": { "bsonType": "string", "minLength": 1 },
+          "d": { "bsonType": "int", "minimum": 0 },
+          "f": { "bsonType": ["string", "null"] },
+          "s": {
+            "bsonType": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "bsonType": "int", "minimum": 0 }
+          },
+          "e": {
+            "bsonType": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "bsonType": "int", "minimum": 0 }
+          },
+          "n": { "bsonType": ["string", "null"], "maxLength": 64 }
+        }
+      }
+    }
+  }
+}
