@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { addRepository, type AddRepositoryState } from "@/app/repositories/actions";
+import { plural } from "@/lib/structure/format";
 import form from "./addRepository.module.css";
 import styles from "./structure.module.css";
 
@@ -48,7 +49,8 @@ export function AddRepositoryForm() {
             Added <Link href={`/repositories/${state.summary.repoId}`}>{state.summary.name}</Link> with {state.summary.files}{" "}
             files, {state.summary.symbols} symbols, {state.summary.calls} calls and {state.summary.imports} imports in{" "}
             {(state.summary.durationMs / 1000).toFixed(1)} s.
-            {state.summary.skipped > 0 && ` ${state.summary.skipped} files were skipped.`}
+            {state.summary.skipped > 0 &&
+              ` ${plural(state.summary.skipped, "file")} ${state.summary.skipped === 1 ? "was" : "were"} skipped.`}
           </p>
         )}
         {!pending && state.status === "error" && (
