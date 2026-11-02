@@ -1139,7 +1139,8 @@ components/
 ├── clones/                   Clone review styles
 ├── history/                  AuthorChurnChart, HotspotTable, RepoFilter, StatTiles
 └── structure/                Shell, FileTree, CallTable, CallGraphView, graphLayout,
-                              AstStatsPanel, AddRepositoryForm, badges
+                              AstStatsPanel, AddRepositoryForm, ImpactView,
+                              WorkflowGraph, workflowLayout, badges
 lib/
 ├── auth/                     access rules, bcrypt, signed sessions, login throttle, users
 ├── clones/                   clone queue and review queries
@@ -1294,7 +1295,7 @@ Test status at the time of writing:
 
 | Suite | Command | Result |
 |---|---|---|
-| App unit tests | `npm test` | 62 of 62 pass |
+| App unit tests | `npm test` | 65 of 65 pass |
 | App type check | `npm run typecheck` | No errors |
 | SQL tests | `docker compose exec -T postgres sh /cie-db/tests/run.sh` | 8 of 8 files pass |
 | Ingest tests | `cd ingest && npm test` | 84 of 84 test cases pass |

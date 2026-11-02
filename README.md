@@ -217,7 +217,7 @@ The full write-up is [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md).
 
 | Suite | Proves |
 |---|---|
-| `npm test` | 62 unit tests: access rules, sessions, bcrypt, login throttling, parameter parsing, DB client setup |
+| `npm test` | 65 unit tests: access rules, sessions, bcrypt, login throttling, parameter parsing, DB client setup, impact workflow layout |
 | `npm run typecheck` | The app type-checks under strict TypeScript |
 | `db/tests/run.sh` | 8 SQL test files in a scratch database: `impact_of`, symbol search, span triggers, history schema, vectors, views, clone review, and the database roles |
 | `cd ingest && npm test` | 84 tests: extraction for five languages, call and import resolution, git log parsing, author merging, embedding and clustering, full ingests against real databases |
