@@ -42,3 +42,28 @@ App:
 - Call graph view.
 - Impact analysis page: pick a symbol, see what it affects.
 
+## Vivian: history, similarity and access
+
+Tables: `AUTHOR`, `AUTHOR_EMAIL`, `COMMIT`, `MODIFIES`, `CLONE_CLUSTER`, `APP_USER`, `WAIVES`
+
+Database work:
+- DDL for the tables above, plus the pgvector extension, the embedding table and its HNSW index, and the `ALTER` that links `SYMBOL.Embedding_ID` and `SYMBOL.Cluster_ID` once Guru's `SYMBOL` table exists.
+- Views: hotspots (most-modified symbols, using `GROUP BY ... HAVING`) and author ownership per file.
+- Transaction for clone review: an admin marks a cluster reviewed and records waivers in one unit.
+- Trigger that sets `Reviewed_At` when a cluster's status changes and blocks reviews by non-admin users.
+- Vector similarity search (cosine) for semantic search and clone grouping.
+
+Ingestion (`ingest/history`, `ingest/embed`):
+- Read `git log`, fill authors, emails and commits, and map diff hunks onto symbol line ranges to produce `MODIFIES` rows.
+- Embed symbol bodies with a local code embedding model and group symbols above a similarity threshold into `CLONE_CLUSTER`.
+
+Auth:
+- `APP_USER` with bcrypt password hashes, session login, and two roles: Admin and Developer. Route middleware enforces the role checks.
+
+App:
+- Login page.
+- Dashboard with hotspots and churn per author.
+- Commit history page.
+- Semantic search page.
+- Clone review queue and waiver form.
+
