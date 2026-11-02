@@ -67,3 +67,16 @@ App:
 - Semantic search page.
 - Clone review queue and waiver form.
 
+## Shared work
+
+| Task | Owner |
+|---|---|
+| `docker-compose.yml` for Postgres (pgvector image) and MongoDB | Guru |
+| Next.js scaffold, `lib/pg.ts`, `lib/mongo.ts`, `.env` handling | Vivian |
+| Docs: problem statement, objectives, scope, functional requirements, system architecture | Vivian |
+| Docs: ER diagram, relational schema, data dictionary, database choice and justification | Guru |
+| Docs: important queries, test results, screenshots | Each person for their own features |
+| README setup and run instructions | Whoever finishes setup first, then both keep it current |
+
+Each person writes tests for their own features and presents their own part at the demo.
+
