@@ -124,3 +124,91 @@ describe("semantic search", () => {
     await expectStatus("/api/search?q=x&limit=0", 400);
   });
 });
+
+// Confirms one open clone cluster and cannot reopen it through the API. Each run prints
+// the cluster id; put it back with
+//   UPDATE clone_cluster SET status = 'open' WHERE cluster_id = <id>;
+//   DELETE FROM waives WHERE symbol_id IN (SELECT symbol_id FROM symbol WHERE cluster_id = <id>);
+describe("clone review", () => {
+  const post = (id, body, as) =>
+    call(
+      `/api/clones/${id}`,
+      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) },
+      as,
+    );
+
+  async function openCluster() {
+    const { clusters, total } = await expectStatus("/api/clones", 200);
+    assert.ok(total > 0, "run npm run embed on a repository with duplicated code first");
+    return clusters[clusters.length - 1];
+  }
+
+  it("lists clusters by status and validates its parameters", async () => {
+    const { clusters, total } = await expectStatus("/api/clones", 200);
+    assert.ok(total > 0 && clusters.length > 0 && clusters.length <= 25);
+    assert.ok(clusters.every((c) => c.status === "open" && c.members >= 2 && typeof c.repoName === "string"));
+    const confirmed = await expectStatus("/api/clones?status=confirmed", 200);
+    assert.ok(confirmed.clusters.every((c) => c.status === "confirmed"));
+    await expectStatus("/api/clones?status=closed", 400);
+    await expectStatus("/api/clones?repo=abc", 400);
+    await expectStatus("/api/clones?page=0", 400);
+  });
+
+  it("shows one cluster with its members", async () => {
+    const summary = await openCluster();
+    const { cluster, members } = await expectStatus(`/api/clones/${summary.clusterId}`, 200);
+    assert.equal(cluster.clusterId, summary.clusterId);
+    assert.equal(members.length, summary.members);
+    assert.ok(members.every((m) => typeof m.waived === "boolean" && m.endLine >= m.startLine));
+    await expectStatus(`/api/clones/${MISSING_ID}`, 404);
+    await expectStatus("/api/clones/abc", 400);
+  });
+
+  it("refuses bad reviews and leaves the cluster open", async () => {
+    const { clusterId } = await openCluster();
+    await expectStatus(`/api/clones/${clusterId}`, 400, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ status: "open" }),
+    });
+    const outsider = await post(clusterId, { status: "confirmed", waive: [MISSING_ID], reason: "kept on purpose" });
+    assert.equal(outsider.status, 400, JSON.stringify(outsider.body));
+    assert.match(outsider.body.error, /not a member/);
+    const { members } = await expectStatus(`/api/clones/${clusterId}`, 200);
+    const noReason = await post(clusterId, { status: "confirmed", waive: [members[0].symbolId], reason: " " });
+    assert.equal(noReason.status, 400, JSON.stringify(noReason.body));
+    assert.match(noReason.body.error, /needs a reason/);
+    const missing = await post(MISSING_ID, { status: "dismissed" });
+    assert.equal(missing.status, 404, JSON.stringify(missing.body));
+    const { cluster } = await expectStatus(`/api/clones/${clusterId}`, 200);
+    assert.equal(cluster.status, "open");
+  });
+
+  it("does not let developers review", async (t) => {
+    if (!process.env.CIE_TEST_DEV_USERNAME || !process.env.CIE_TEST_DEV_PASSWORD) {
+      t.skip("set CIE_TEST_DEV_USERNAME and CIE_TEST_DEV_PASSWORD");
+      return;
+    }
+    const developer = await signIn(process.env.CIE_TEST_DEV_USERNAME, process.env.CIE_TEST_DEV_PASSWORD);
+    const { clusterId } = await openCluster();
+    const result = await post(clusterId, { status: "confirmed" }, developer);
+    assert.equal(result.status, 403, JSON.stringify(result.body));
+    await expectStatus(`/api/clones/${clusterId}`, 200, undefined, developer);
+  });
+
+  it("confirms an open cluster once, with a waiver", async (t) => {
+    const { clusterId } = await openCluster();
+    t.diagnostic(`reviewed clone cluster ${clusterId}; reopen it by hand`);
+    const { members } = await expectStatus(`/api/clones/${clusterId}`, 200);
+    const waived = members[0].symbolId;
+    const first = await post(clusterId, { status: "confirmed", waive: [waived], reason: "kept on purpose for the test" });
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(first.body.cluster.status, "confirmed");
+    assert.equal(first.body.cluster.reviewer, process.env.CIE_TEST_USERNAME);
+    assert.ok(first.body.cluster.reviewedAt);
+    assert.deepEqual(first.body.members.filter((m) => m.waived).map((m) => m.symbolId), [waived]);
+    const second = await post(clusterId, { status: "dismissed" });
+    assert.equal(second.status, 409, JSON.stringify(second.body));
+    assert.match(second.body.error, /already reviewed/);
+  });
+});
