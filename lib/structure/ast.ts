@@ -23,7 +23,7 @@ export function nodeTypeCountsByLanguage({ repoId, limit = 10 }: { repoId: numbe
         top_types: {
           $topN: {
             n: limit,
-            sortBy: { count: -1, type: 1 },
+            sortBy: { count: -1, "_id.type": 1 },
             output: { type: "$_id.type", count: "$count", files: "$files" },
           },
         },
