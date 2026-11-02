@@ -42,3 +42,21 @@ SELECT p.repo_id,
        rank() OVER (PARTITION BY p.repo_id, p.path ORDER BY p.churn DESC, p.author_id) = 1           AS is_owner
 FROM per_author p
 JOIN author a ON a.author_id = p.author_id;
+
+-- One row per author, including authors whose commits were all in deleted repositories.
+CREATE VIEW v_author_activity AS
+SELECT a.author_id,
+       a.name,
+       a.company,
+       coalesce((SELECT array_agg(e.email ORDER BY e.email) FROM author_email e WHERE e.author_id = a.author_id),
+                '{}')                                                    AS emails,
+       count(DISTINCT c.repo_id)::int                                    AS repos,
+       count(DISTINCT c.commit_id)::int                                  AS commits,
+       coalesce((SELECT sum(m.additions + m.deletions)
+                 FROM modifies m JOIN commit c2 ON c2.commit_id = m.commit_id
+                 WHERE c2.author_id = a.author_id), 0)::int              AS churn,
+       min(c.committed_at)                                               AS first_commit,
+       max(c.committed_at)                                               AS last_commit
+FROM author a
+LEFT JOIN commit c ON c.author_id = a.author_id
+GROUP BY a.author_id, a.name, a.company;
