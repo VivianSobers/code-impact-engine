@@ -204,9 +204,10 @@ END $$;
 
 SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score) VALUES (1.2)$q$, '23514', 'clone_cluster_score_range');
 SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score, status, reviewed_at) VALUES (0.9, 'merged', now())$q$, '23514', 'clone_cluster_status_known');
+-- A closed cluster without a reviewer is refused by clone_cluster_review_guard (30_clone_review.sql).
 SELECT pg_temp.rejects(
     $q$INSERT INTO clone_cluster (similarity_score, status) VALUES (0.9, 'confirmed')$q$,
-    '23514', 'clone_cluster_reviewed_when_closed');
+    '42501');
 SELECT pg_temp.rejects(
     $q$INSERT INTO clone_cluster (similarity_score, reviewed_at) VALUES (0.9, now())$q$,
     '23514', 'clone_cluster_reviewed_when_closed');
