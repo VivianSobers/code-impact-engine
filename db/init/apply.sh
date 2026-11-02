@@ -4,7 +4,7 @@ set -eu
 target="${CIE_DB:-$POSTGRES_DB}"
 root="${CIE_DB_ROOT:-/cie-db}"
 
-for dir in schema functions views seed; do
+for dir in schema functions views security seed; do
   for f in "$root"/"$dir"/*.sql; do
     [ -e "$f" ] || continue
     echo "applying $f to $target"
