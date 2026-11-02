@@ -1,0 +1,33 @@
+.form {
+  padding: 1.1rem 1.2rem 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(8rem, 0.7fr) auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+@media (max-width: 760px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.status {
+  min-height: 1.6rem;
+  padding: 0.6rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.status p {
+  margin: 0;
+}
+
+.success {
+  color: var(--ok);
+}
