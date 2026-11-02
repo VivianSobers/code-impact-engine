@@ -1,0 +1,6 @@
+/* Pages style themselves with CSS modules; this only resets the document. */
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
