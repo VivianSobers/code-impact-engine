@@ -4,9 +4,11 @@ import { before, describe, it } from "node:test";
 const BASE_URL = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const INGEST_SOURCE = process.env.INGEST_SOURCE ?? "";
 const MISSING_ID = 999999999;
+let sessionCookie = "";
 
 async function call(path, init) {
-  const response = await fetch(`${BASE_URL}${path}`, init);
+  const headers = { ...(init?.headers ?? {}), ...(sessionCookie ? { cookie: sessionCookie } : {}) };
+  const response = await fetch(`${BASE_URL}${path}`, { ...init, headers });
   const text = await response.text();
   let body = null;
   try {
@@ -37,7 +39,19 @@ function encodePath(path) {
 
 const ids = {};
 
+// Every route needs a session. Sign in with CIE_TEST_USERNAME and CIE_TEST_PASSWORD;
+// adding a repository needs an admin.
+async function signIn() {
+  const username = process.env.CIE_TEST_USERNAME;
+  const password = process.env.CIE_TEST_PASSWORD;
+  assert.ok(username && password, "set CIE_TEST_USERNAME and CIE_TEST_PASSWORD to a user of the app");
+  const response = await fetch(`${BASE_URL}/api/session`, post({ username, password }));
+  assert.equal(response.status, 200, `signing in as ${username} failed: ${await response.text()}`);
+  sessionCookie = response.headers.get("set-cookie").split(";")[0];
+}
+
 before(async () => {
+  await signIn();
   const { repositories } = await expectStatus("/api/repositories", 200);
   assert.ok(repositories.length > 0, "ingest at least one repository before running these tests");
   const repo = [...repositories].sort((a, b) => b.callCount - a.callCount)[0];
