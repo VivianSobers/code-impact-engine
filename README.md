@@ -96,6 +96,7 @@ CIE_TEST_USERNAME=admin CIE_TEST_PASSWORD=... node --test tests/structure/api.te
 
 ## Documentation
 
+- [Project overview: problem, objectives, scope, requirements, architecture](docs/PROJECT_OVERVIEW.md)
 - [ER diagram and relational schema](docs/ER_Relational_Schema.pdf)
 - [Database design: mapping, data dictionary and storage choices](docs/DATABASE_DESIGN.md)
 - [Work split between team members](docs/WORK_SPLIT.md)
