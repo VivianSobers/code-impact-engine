@@ -3,7 +3,7 @@ import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/tran
 import { repoRoot } from "../../parse/src/config";
 
 // Code embedding model, run locally. The app embeds search queries with the same model
-// (lib/search/embedding.ts), and symbol_embedding.model records which one made a vector.
+// (lib/search/model.ts), and symbol_embedding.model records which one made a vector.
 export const EMBEDDING_MODEL = "jinaai/jina-embeddings-v2-base-code";
 export const EMBEDDING_DIMS = 768;
 export const MODEL_CACHE = path.join(repoRoot, ".cache/models");
