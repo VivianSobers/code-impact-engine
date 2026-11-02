@@ -37,3 +37,20 @@ Out of scope:
 - Watching a repository for new commits. Ingestion is re-run by hand.
 - Self-service sign-up and password reset. An admin creates every account.
 - Hosting. The app runs locally against Docker Compose databases.
+
+## Functional requirements
+
+| ID | Requirement | Owner |
+|---|---|---|
+| FR1 | An admin adds a repository by URL or local path; the app clones it, parses it and stores files, symbols, calls and imports in one transaction. | Guru |
+| FR2 | Users browse a repository's files and see each file's symbols with their line ranges. | Guru |
+| FR3 | Users open a symbol and see its callers, its callees and a call graph around it. | Guru |
+| FR4 | Users pick a symbol and get its impact set: every symbol and entry point that can reach it, with the call depth. | Guru |
+| FR5 | Users search symbols by name and signature (full-text search). | Guru |
+| FR6 | A repository page shows node-type counts per language and the most deeply nested files, computed by MongoDB aggregation pipelines over the stored syntax trees. | Guru |
+| FR7 | The history step reads `git log` and stores authors, their email addresses, commits, and one row per (commit, symbol) with added and deleted lines. | Vivian |
+| FR8 | The dashboard shows totals, the symbols changed most often (hotspots) and lines changed per author, filterable by repository. | Vivian |
+| FR9 | Users list commits newest first, filter by repository and author, search commit messages, and open a commit to see the symbols it changed. | Vivian |
+| FR10 | Users describe what code does in plain words and get the closest functions and methods, ranked by cosine similarity. | Vivian |
+| FR11 | The embed step groups near-duplicate functions into clone clusters. Admins confirm or dismiss each cluster and can waive individual members with a reason; developers see the queue read-only. | Vivian |
+| FR12 | Users sign in with a username and password. Admins create users and choose their role. Pages and API routes enforce the role rules in the table below. | Vivian |
