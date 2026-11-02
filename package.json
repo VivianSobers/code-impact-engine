@@ -1,0 +1,30 @@
+{
+  "name": "code-impact-engine",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"tests/unit/**/*.test.ts\""
+  },
+  "dependencies": {
+    "mongodb": "6.21.0",
+    "next": "15.5.28",
+    "pg": "8.23.1",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
