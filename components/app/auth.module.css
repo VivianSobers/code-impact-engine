@@ -1,0 +1,31 @@
+.page {
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem;
+}
+
+.card {
+  width: min(100%, 24rem);
+  margin-top: 12vh;
+}
+
+.brand {
+  margin: 0 0 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.form button {
+  justify-self: start;
+}
