@@ -340,3 +340,26 @@ func main() {
     assert.equal(file.facts.localTypes.get("srv"), "Server");
   });
 });
+
+describe("signatures with trailing comments", async () => {
+  const python = await parseFile(
+    "tests/test_session.py",
+    `class TestSession:
+    def test_prefix(self):  # from issue 6935
+        assert True
+`,
+  );
+  const javascript = await parseFile(
+    "lib/send.js",
+    `function send(body) // legacy entry
+{
+  return body;
+}
+`,
+  );
+
+  it("drops the comment from the declaration header", () => {
+    assert.equal(python.facts.symbols.find((symbol) => symbol.name === "test_prefix")?.signature, "def test_prefix(self)");
+    assert.equal(javascript.facts.symbols.find((symbol) => symbol.name === "send")?.signature, "function send(body)");
+  });
+});

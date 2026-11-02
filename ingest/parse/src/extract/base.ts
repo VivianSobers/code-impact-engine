@@ -131,7 +131,14 @@ export abstract class Extractor {
   }
 
   protected signature(from: SyntaxNode, body: SyntaxNode | null): string | null {
-    const end = body && body.startIndex > from.startIndex ? body.startIndex : from.endIndex;
+    let end = body && body.startIndex > from.startIndex ? body.startIndex : from.endIndex;
+    for (let i = 0; i < from.childCount; i++) {
+      const child = from.child(i);
+      if (child && child.type === "comment" && child.startIndex > from.startIndex && child.startIndex < end) {
+        end = child.startIndex;
+        break;
+      }
+    }
     let text = this.source.slice(from.startIndex, end);
     if (!body) text = text.split("\n", 1)[0];
     text = text.replace(/\s+/g, " ").trim().replace(/\s*[{:]$/, "").trim();
