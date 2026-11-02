@@ -1,29 +1,38 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { UserMenu } from "@/components/app/UserMenu";
+import { getCurrentUser } from "@/lib/auth/current";
 import { plexMono, plexSans } from "./fonts";
 import styles from "./structure.module.css";
 
-export type Section = "repositories" | "impact";
+export type Section = "dashboard" | "repositories" | "impact" | "commits" | "search" | "clones" | "users";
 
-const SECTIONS: { id: Section; href: string; label: string }[] = [
+const SECTIONS: { id: Section; href: string; label: string; adminOnly?: boolean }[] = [
+  { id: "dashboard", href: "/dashboard", label: "Dashboard" },
   { id: "repositories", href: "/repositories", label: "Repositories" },
   { id: "impact", href: "/impact", label: "Impact analysis" },
+  { id: "commits", href: "/commits", label: "Commits" },
+  { id: "search", href: "/search", label: "Search" },
+  { id: "clones", href: "/clones", label: "Clones" },
+  { id: "users", href: "/admin/users", label: "Users", adminOnly: true },
 ];
 
-export function Shell({ section, children }: { section?: Section; children: ReactNode }) {
+export async function Shell({ section, children }: { section?: Section; children: ReactNode }) {
+  const user = await getCurrentUser();
   return (
     <div className={`${plexSans.variable} ${plexMono.variable} ${styles.shell}`}>
       <header className={styles.bar}>
-        <Link href="/repositories" className={styles.brand}>
+        <Link href="/dashboard" className={styles.brand}>
           Code impact engine
         </Link>
-        <nav aria-label="Code structure" className={styles.sectionNav}>
-          {SECTIONS.map((s) => (
+        <nav aria-label="Sections" className={styles.sectionNav}>
+          {SECTIONS.filter((s) => !s.adminOnly || user?.role === "admin").map((s) => (
             <Link key={s.id} href={s.href} aria-current={s.id === section ? "page" : undefined}>
               {s.label}
             </Link>
           ))}
         </nav>
+        {user && <UserMenu user={user} />}
       </header>
       <main className={styles.main}>{children}</main>
     </div>
