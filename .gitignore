@@ -1,0 +1,25 @@
+# dependencies and builds
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# env and secrets
+.env
+.env*.local
+
+# local tooling
+.remember/
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# course handout (not ours to publish)
+DBMS Level 3 Project Requirements*.pdf
+
+# repos cloned by the ingester
+ingest/workdir/
