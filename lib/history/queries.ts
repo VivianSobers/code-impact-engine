@@ -179,13 +179,14 @@ export async function getCommit(commitId: number): Promise<{ commit: CommitSumma
   const changes = await pool.query<{
     symbol_id: string;
     path: string;
+    start_line: number;
     name: string;
     kind: SymbolKind;
     additions: number;
     deletions: number;
     change_type: "added" | "modified";
   }>(
-    `SELECT s.symbol_id, s.path, s.name, s.kind, m.additions, m.deletions, m.change_type
+    `SELECT s.symbol_id, s.path, s.start_line, s.name, s.kind, m.additions, m.deletions, m.change_type
      FROM modifies m JOIN symbol s USING (symbol_id)
      WHERE m.commit_id = $1
      ORDER BY s.path, s.start_line`,
@@ -196,6 +197,7 @@ export async function getCommit(commitId: number): Promise<{ commit: CommitSumma
     changes: changes.rows.map((r) => ({
       symbolId: Number(r.symbol_id),
       path: r.path,
+      startLine: r.start_line,
       name: r.name,
       kind: r.kind,
       additions: r.additions,

@@ -48,6 +48,7 @@ export interface CommitSummary {
 export interface CommitChange {
   symbolId: number;
   path: string;
+  startLine: number;
   name: string;
   kind: SymbolKind;
   additions: number;
