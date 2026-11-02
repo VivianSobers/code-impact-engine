@@ -57,4 +57,18 @@ BEGIN
     END IF;
 END $$;
 
+-- v_file_ownership: churn per author per file, shares sum to 1, ties go to the lower author_id.
+DO $$
+DECLARE
+    v_rows text;
+BEGIN
+    SELECT string_agg(format('%s:%s:%s:%s:%s:%s', path, author_name, commits, churn, share, is_owner), ' '
+                      ORDER BY path, author_id)
+    INTO v_rows
+    FROM v_file_ownership WHERE repo_id = pg_temp.repo();
+    IF v_rows IS DISTINCT FROM 'f.py:Ana:2:14:0.5833:t f.py:Ben:1:10:0.4167:f g.py:Ana:1:2:0.5000:t g.py:Ben:1:2:0.5000:f' THEN
+        RAISE EXCEPTION 'unexpected ownership: %', v_rows;
+    END IF;
+END $$;
+
 ROLLBACK;
