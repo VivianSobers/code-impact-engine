@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { plexMono, plexSans } from "./fonts";
 import styles from "./structure.module.css";
 
-export type Section = "repositories";
+export type Section = "repositories" | "impact";
 
 const SECTIONS: { id: Section; href: string; label: string }[] = [
   { id: "repositories", href: "/repositories", label: "Repositories" },
+  { id: "impact", href: "/impact", label: "Impact analysis" },
 ];
 
 export function Shell({ section, children }: { section?: Section; children: ReactNode }) {
