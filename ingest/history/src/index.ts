@@ -31,7 +31,7 @@ export function checkoutDir(url: string): string {
   return isRemote(url) ? workdirFor(url) : path.resolve(repoRoot, url);
 }
 
-async function findRepository(client: pg.Client, repo: number | string): Promise<{ repoId: number; url: string }> {
+export async function findRepository(client: pg.Client, repo: number | string): Promise<{ repoId: number; url: string }> {
   const result =
     typeof repo === "number"
       ? await client.query<{ repo_id: string; url: string }>("SELECT repo_id, url FROM repository WHERE repo_id = $1", [repo])
