@@ -34,3 +34,7 @@ docs/         ER diagram, relational schema, project documentation
 
 These folders get created as the work lands.
 
+## Setup
+
+Setup and run instructions will go here once `docker-compose.yml` and the Next.js app exist. Database credentials come from environment variables. Copy `.env.example` to `.env` and fill it in; `.env` is git-ignored.
+
