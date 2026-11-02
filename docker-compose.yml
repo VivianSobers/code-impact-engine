@@ -29,6 +29,8 @@ services:
       - "${MONGO_PORT:-27017}:27017"
     volumes:
       - mongodata:/data/db
+      - ./db/mongo/init:/docker-entrypoint-initdb.d:ro
+      - ./db:/cie-db:ro
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
