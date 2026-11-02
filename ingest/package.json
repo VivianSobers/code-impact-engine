@@ -10,6 +10,7 @@
     "parse": "tsx parse/src/cli.ts",
     "seed": "node parse/seed/create-seed-repo.mjs && tsx parse/src/cli.ts workdir/seed-repo --name seed-repo --url ingest/workdir/seed-repo",
     "seed:sql": "tsx parse/seed/export-seed-sql.ts",
+    "history": "tsx history/src/cli.ts",
     "test": "node --import tsx --test --test-concurrency=1 \"parse/test/**/*.test.ts\" \"history/test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
