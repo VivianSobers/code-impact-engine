@@ -54,3 +54,49 @@ Out of scope:
 | FR10 | Users describe what code does in plain words and get the closest functions and methods, ranked by cosine similarity. | Vivian |
 | FR11 | The embed step groups near-duplicate functions into clone clusters. Admins confirm or dismiss each cluster and can waive individual members with a reason; developers see the queue read-only. | Vivian |
 | FR12 | Users sign in with a username and password. Admins create users and choose their role. Pages and API routes enforce the role rules in the table below. | Vivian |
+
+## System architecture
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI[Pages and forms]
+  end
+  subgraph Next.js app
+    MW[middleware.ts<br/>session and role check]
+    SC[Server components<br/>and server actions]
+    API[Route handlers<br/>/api/...]
+    LIB[lib/*<br/>queries, auth, query embedding]
+  end
+  subgraph Databases
+    PG[(PostgreSQL 16 + pgvector<br/>tables, views, functions,<br/>triggers, HNSW index)]
+    MG[(MongoDB 7<br/>ast collection)]
+  end
+  subgraph Ingest CLI
+    P[parse<br/>tree-sitter]
+    H[history<br/>git log]
+    E[embed<br/>code embedding model]
+  end
+  GIT[(Git repository)]
+
+  UI --> MW --> SC
+  MW --> API
+  SC --> LIB
+  API --> LIB
+  LIB --> PG
+  LIB --> MG
+  GIT --> P --> PG
+  P --> MG
+  GIT --> H --> PG
+  PG --> E --> PG
+```
+
+The browser only talks to the Next.js server. `middleware.ts` checks the session cookie on every request and applies the role rules before any page or route runs. Pages are server components that call the query functions in `lib/` directly; the same functions back the JSON routes under `/api`, so every screen has an API equivalent. Database credentials come from environment variables (`DATABASE_URL`, `MONGODB_URI`, `SESSION_SECRET`) and never reach the browser.
+
+Ingestion runs from the command line in three steps, each re-runnable:
+
+1. `npm run parse` clones the repository, parses every supported file with tree-sitter, writes each syntax tree to MongoDB and the files, symbols, calls and imports to PostgreSQL.
+2. `npm run history` reads the full `git log` with zero-context patches, re-parses each changed file at the old and new revision, and attributes added and deleted lines to the symbols whose line ranges they fall in.
+3. `npm run embed` embeds each function and method body, stores one vector per distinct body, links symbols to their vectors and rebuilds the open clone clusters.
+
+The search page embeds the user's description with the same model in the app server and asks PostgreSQL for the nearest vectors by cosine distance. Clone reviews go through the stored procedure `review_clone_cluster`, which locks the cluster row, checks the reviewer and records waivers in one transaction.
