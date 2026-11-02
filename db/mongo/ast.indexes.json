@@ -1,6 +1,6 @@
 [
   { "name": "repo_path_unique", "key": { "repo_id": 1, "path": 1 }, "unique": true },
-  { "name": "repo_depth", "key": { "repo_id": 1, "max_depth": -1 } },
+  { "name": "repo_depth", "key": { "repo_id": 1, "max_depth": -1, "path": 1 } },
   { "name": "repo_language", "key": { "repo_id": 1, "language": 1 } },
   { "name": "language", "key": { "language": 1 } },
   { "name": "content_hash", "key": { "content_hash": 1 } }
