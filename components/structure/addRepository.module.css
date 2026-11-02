@@ -1,0 +1,69 @@
+.form {
+  padding: 1.1rem 1.2rem 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(16rem, 2.4fr) minmax(8rem, 1fr) minmax(8rem, 1fr) auto;
+  gap: 0.9rem;
+  align-items: end;
+}
+
+@media (max-width: 860px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.source input {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.status {
+  min-height: 1.6rem;
+  padding: 0.6rem 0 0.4rem;
+  font-size: 0.9rem;
+}
+
+.status p {
+  margin: 0;
+}
+
+.pending {
+  color: var(--muted);
+}
+
+.success {
+  color: var(--ok);
+}
+
+.error {
+  color: var(--error);
+}
+
+.error details {
+  margin-top: 0.4rem;
+  color: var(--ink);
+}
+
+.error summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.error pre {
+  max-height: 16rem;
+  overflow: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.75rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+}
