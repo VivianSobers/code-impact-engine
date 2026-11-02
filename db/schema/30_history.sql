@@ -72,3 +72,37 @@ CREATE TABLE app_user (
     CONSTRAINT app_user_password_bcrypt CHECK (password_hash ~ '^\$2[aby]\$1[0-4]\$[./A-Za-z0-9]{53}$'),
     CONSTRAINT app_user_role_known CHECK (role IN ('admin', 'developer'))
 );
+
+-- A group of symbols whose embeddings are near duplicates. A cluster is open until
+-- an admin confirms or dismisses it; reviewed_at is set exactly when it is closed.
+CREATE TABLE clone_cluster (
+    cluster_id       bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    similarity_score numeric(4,3) NOT NULL,
+    status           text         NOT NULL DEFAULT 'open',
+    detected_at      timestamptz  NOT NULL DEFAULT now(),
+    reviewed_by      bigint,
+    reviewed_at      timestamptz,
+    CONSTRAINT clone_cluster_reviewer_fkey FOREIGN KEY (reviewed_by)
+        REFERENCES app_user (user_id) ON DELETE SET NULL,
+    CONSTRAINT clone_cluster_score_range CHECK (similarity_score BETWEEN 0 AND 1),
+    CONSTRAINT clone_cluster_status_known CHECK (status IN ('open', 'confirmed', 'dismissed')),
+    CONSTRAINT clone_cluster_reviewed_when_closed CHECK ((status = 'open') = (reviewed_at IS NULL))
+);
+
+CREATE INDEX clone_cluster_status_idx ON clone_cluster (status, detected_at DESC);
+
+-- A user marks a symbol as an intended duplicate, with a reason.
+CREATE TABLE waives (
+    user_id   bigint      NOT NULL,
+    symbol_id bigint      NOT NULL,
+    reason    text        NOT NULL,
+    waived_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT waives_pkey PRIMARY KEY (user_id, symbol_id),
+    CONSTRAINT waives_user_fkey FOREIGN KEY (user_id)
+        REFERENCES app_user (user_id) ON DELETE CASCADE,
+    CONSTRAINT waives_symbol_fkey FOREIGN KEY (symbol_id)
+        REFERENCES symbol (symbol_id) ON DELETE CASCADE,
+    CONSTRAINT waives_reason_length CHECK (length(btrim(reason)) BETWEEN 5 AND 500)
+);
+
+CREATE INDEX waives_symbol_idx ON waives (symbol_id);
