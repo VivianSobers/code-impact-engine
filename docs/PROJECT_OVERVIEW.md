@@ -100,3 +100,20 @@ Ingestion runs from the command line in three steps, each re-runnable:
 3. `npm run embed` embeds each function and method body, stores one vector per distinct body, links symbols to their vectors and rebuilds the open clone clusters.
 
 The search page embeds the user's description with the same model in the app server and asks PostgreSQL for the nearest vectors by cosine distance. Clone reviews go through the stored procedure `review_clone_cluster`, which locks the cluster row, checks the reviewer and records waivers in one transaction.
+
+## Roles and access
+
+Every account is either an Admin or a Developer. The role is stored in `app_user.role` and copied into the signed session cookie at sign-in.
+
+| Action | Signed out | Developer | Admin |
+|---|---|---|---|
+| Sign in | yes | yes | yes |
+| View dashboard, repositories, files, symbols, impact, commits, search | no (sent to the sign-in page; API returns 401) | yes | yes |
+| View clone queue and clusters | no | yes | yes |
+| Add a repository | no | no (403) | yes |
+| Confirm or dismiss a clone cluster, waive members | no | no (403) | yes |
+| Create users | no | no (403) | yes |
+
+The rules are enforced in three places. `middleware.ts` rejects the request before it reaches a page or route. The route or server action checks the signed-in user again. For clone reviews the database checks a third time: the trigger on `clone_cluster` raises SQLSTATE 42501 unless the reviewer's `app_user.role` is `admin`, so a bug in the app cannot record a review by a developer.
+
+Passwords are stored as bcrypt hashes with cost 12, and a CHECK constraint rejects anything in `password_hash` that is not a bcrypt hash. After five failed sign-ins for one username within ten minutes, further attempts are refused until the window passes.
