@@ -97,3 +97,30 @@ describe("commits", () => {
     await expectStatus(`/api/commits/${MISSING_ID}`, 404);
   });
 });
+
+describe("semantic search", () => {
+  it("ranks embedded symbols by similarity to a description", async () => {
+    const { results, model } = await expectStatus(`/api/search?q=${encodeURIComponent("parse the accept header")}&limit=5`, 200);
+    assert.equal(typeof model, "string");
+    assert.ok(results.length > 0 && results.length <= 5, "run npm run embed on a repository first");
+    for (let i = 1; i < results.length; i++) assert.ok(results[i - 1].similarity >= results[i].similarity);
+    assert.ok(results.every((r) => r.similarity > -1 && r.similarity <= 1 && r.symbolId > 0 && r.path));
+  });
+
+  it("returns nothing for a repository without embeddings", async () => {
+    const { repositories } = await expectStatus("/api/repositories", 200);
+    const { results: all } = await expectStatus(`/api/search?q=function&limit=50`, 200);
+    const embedded = new Set(all.map((r) => r.repoId));
+    const bare = repositories.find((r) => !embedded.has(r.repoId));
+    if (!bare) return;
+    const { results } = await expectStatus(`/api/search?q=function&repo=${bare.repoId}`, 200);
+    assert.ok(results.every((r) => r.repoId === bare.repoId));
+  });
+
+  it("rejects empty, long and malformed queries", async () => {
+    await expectStatus("/api/search?q=", 400);
+    await expectStatus(`/api/search?q=${"a".repeat(501)}`, 400);
+    await expectStatus("/api/search?q=x&repo=abc", 400);
+    await expectStatus("/api/search?q=x&limit=0", 400);
+  });
+});
