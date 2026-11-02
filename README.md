@@ -16,3 +16,21 @@ The engine ingests a Git repository, parses its source into files, symbols, call
 - MongoDB for per-file ASTs
 - Next.js (App Router, TypeScript) for the web app and API
 
+## Repository layout
+
+```
+app/          Next.js app (pages and API route handlers)
+db/
+  schema/     DDL: tables, constraints, indexes
+  views/      views
+  functions/  stored functions, procedures and triggers
+  seed/       sample data
+ingest/
+  parse/      clone + tree-sitter parsing -> Postgres and MongoDB
+  history/    git log -> authors, commits, MODIFIES
+  embed/      symbol embeddings and clone clustering
+docs/         ER diagram, relational schema, project documentation
+```
+
+These folders get created as the work lands.
+
