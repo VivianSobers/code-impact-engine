@@ -35,8 +35,17 @@ SELECT pg_temp.rejects(
     $q$INSERT INTO author_email (author_id, email) SELECT author_id, 'Ana@Acme.io' FROM author WHERE name = 'Ana Ruiz'$q$,
     '23514', 'author_email_lowercase');
 SELECT pg_temp.rejects(
-    $q$INSERT INTO author_email (author_id, email) SELECT author_id, 'not-an-email' FROM author WHERE name = 'Ana Ruiz'$q$,
+    $q$INSERT INTO author_email (author_id, email) SELECT author_id, 'ana ruiz@acme.io' FROM author WHERE name = 'Ana Ruiz'$q$,
     '23514', 'author_email_format');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO author_email (author_id, email) SELECT author_id, 'ana@@acme.io' FROM author WHERE name = 'Ana Ruiz'$q$,
+    '23514', 'author_email_format');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO author_email (author_id, email) SELECT author_id, '' FROM author WHERE name = 'Ana Ruiz'$q$,
+    '23514', 'author_email_format');
+
+-- Git does not require an address in the email field; real histories have bare names.
+INSERT INTO author_email (author_id, email) SELECT author_id, 'ana.ruiz' FROM author WHERE name = 'Ana Ruiz';
 SELECT pg_temp.rejects(
     $q$INSERT INTO author_email (author_id, email) SELECT author_id, 'ana@acme.io' FROM author WHERE name = 'Ben Okafor'$q$,
     '23505', 'author_email_email_key');
