@@ -1,0 +1,29 @@
+{
+  "name": "cie-ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "parse": "tsx parse/src/cli.ts",
+    "seed": "node parse/seed/create-seed-repo.mjs && tsx parse/src/cli.ts workdir/seed-repo --name seed-repo --url ingest/workdir/seed-repo",
+    "seed:sql": "tsx parse/seed/export-seed-sql.ts",
+    "test": "node --import tsx --test \"parse/test/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "16.6.1",
+    "mongodb": "6.21.0",
+    "pg": "8.23.1",
+    "tree-sitter-wasms": "0.1.13",
+    "web-tree-sitter": "0.22.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/pg": "^8.23.1",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
