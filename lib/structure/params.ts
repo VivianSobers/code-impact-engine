@@ -28,6 +28,14 @@ export function parseBoundedInt(
   return value;
 }
 
+export function parseConfidence(raw: string | null | undefined, label = "min"): number {
+  if (raw == null || raw === "") return 0;
+  if (!/^(0(\.[0-9]+)?|1(\.0+)?|\.[0-9]+)$/.test(raw)) {
+    throw new BadRequestError(`${label} must be a number between 0 and 1`);
+  }
+  return Number(raw);
+}
+
 export function joinPathSegments(segments: string[]): string {
   let path: string;
   try {
