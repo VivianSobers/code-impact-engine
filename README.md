@@ -44,6 +44,8 @@ Database credentials and secrets come from environment variables. Copy the templ
 cp .env.example .env
 ```
 
+Set `SESSION_SECRET` in `.env` to a random string of at least 32 characters, for example the output of `openssl rand -base64 32`. Sessions are signed with it.
+
 Start Postgres (with pgvector) and MongoDB:
 
 ```sh
@@ -66,6 +68,14 @@ cd ..
 
 `npm run seed` parses the seed repository, `npm run history` reads its commits and `npm run embed` embeds its functions and finds duplicated code. The first `embed` downloads the embedding model (about 160 MB). For another repository, run `npm run parse -- <git-url-or-path>`, then `npm run history -- <name>` and `npm run embed -- <name>`; see [ingest/README.md](ingest/README.md).
 
+Create the first admin account. The script asks for the password (at least 10 characters) without showing it:
+
+```sh
+npm run user:create -- --username admin --role admin
+```
+
+Admins can add more users, as admins or developers, from the Users page. Developers can browse everything; only admins can add repositories, review clone clusters and manage users.
+
 Run the app:
 
 ```sh
@@ -81,7 +91,7 @@ npm test                                  # app unit tests
 npm run typecheck                         # app type check
 cd ingest && npm test                     # parser tests
 docker compose exec -T postgres sh /cie-db/tests/run.sh   # SQL tests in a scratch database
-node --test tests/structure/api.test.mjs  # API smoke test against a running server
+CIE_TEST_USERNAME=admin CIE_TEST_PASSWORD=... node --test tests/structure/api.test.mjs  # API smoke test against a running server
 ```
 
 ## Documentation
