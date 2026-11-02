@@ -24,6 +24,18 @@ export class JavaExtractor extends Extractor {
       case "method_declaration":
       case "constructor_declaration":
         return this.method(node, scope);
+      case "local_variable_declaration":
+      case "field_declaration":
+        for (const declarator of node.childrenForFieldName("declarator")) {
+          const name = declarator.childForFieldName("name")?.text;
+          const type = this.typeName(node.childForFieldName("type"));
+          this.recordType(name, type);
+          if (node.type === "field_declaration" && name) this.recordType(`this.${name}`, type);
+        }
+        return this.visitChildren(node, scope);
+      case "formal_parameter":
+        this.recordType(node.childForFieldName("name")?.text, this.typeName(node.childForFieldName("type")));
+        return;
       case "method_invocation":
         return this.invocation(node, scope);
       case "object_creation_expression":
@@ -59,13 +71,20 @@ export class JavaExtractor extends Extractor {
       mainLike: name === "main" && modifiers.includes("static") && node.type === "method_declaration",
       owner: scope.owner,
     });
-    this.visitChildren(body, this.enter(scope, index));
+    const inner = this.enter(scope, index);
+    const parameters = node.childForFieldName("parameters");
+    if (parameters) this.visitChildren(parameters, inner);
+    this.visitChildren(body, inner);
   }
 
   private receiver(node: SyntaxNode | null): Receiver {
     if (!node) return { kind: "none" };
     if (node.type === "this") return { kind: "self" };
     if (node.type === "super") return { kind: "super" };
+    if (node.type === "field_access" && node.childForFieldName("object")?.type === "this") {
+      const field = node.childForFieldName("field")?.text;
+      return field ? { kind: "name", name: `this.${field}` } : { kind: "expression" };
+    }
     const name = this.dottedName(node, memberTypes, ["object", "field"]);
     return name ? { kind: "name", name } : { kind: "expression" };
   }

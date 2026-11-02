@@ -20,6 +20,18 @@ export class GoExtractor extends Extractor {
         return this.typeSpec(node, scope);
       case "call_expression":
         return this.call(node, scope);
+      case "parameter_declaration":
+      case "var_spec": {
+        const type = this.typeName(node.childForFieldName("type"));
+        for (const name of node.childrenForFieldName("name")) this.recordType(name.text, type);
+        return this.visitChildren(node, scope);
+      }
+      case "short_var_declaration": {
+        const names = node.childForFieldName("left")?.namedChildren ?? [];
+        const values = node.childForFieldName("right")?.namedChildren ?? [];
+        names.forEach((name, index) => this.recordType(name.text, this.literalType(values[index] ?? null)));
+        return this.visitChildren(node, scope);
+      }
       default:
         return this.visitChildren(node, scope);
     }
@@ -38,7 +50,9 @@ export class GoExtractor extends Extractor {
       exported: this.isExported(name),
       mainLike: name === "main" && this.facts.packageName === "main",
     });
-    if (body) this.visitChildren(body, this.enter(scope, index));
+    const inner = this.enter(scope, index);
+    this.visitParameters(node, inner);
+    if (body) this.visitChildren(body, inner);
   }
 
   private methodDeclaration(node: SyntaxNode, scope: Scope): void {
@@ -49,13 +63,35 @@ export class GoExtractor extends Extractor {
     const selfName = parameter?.childForFieldName("name")?.text ?? null;
     const owner = this.receiverType(parameter?.childForFieldName("type") ?? null);
     const index = this.addSymbol(node, name, "method", { body, exported: this.isExported(name), owner, selfName });
-    if (body) this.visitChildren(body, this.enter(scope, index, { owner, selfName }));
+    const inner = this.enter(scope, index, { owner, selfName });
+    this.visitParameters(node, inner);
+    if (body) this.visitChildren(body, inner);
+  }
+
+  private visitParameters(node: SyntaxNode, scope: Scope): void {
+    const parameters = node.childForFieldName("parameters");
+    if (parameters) this.visitChildren(parameters, scope);
   }
 
   private receiverType(node: SyntaxNode | null): string | null {
     if (!node) return null;
     if (node.type === "type_identifier") return node.text;
     if (node.type === "pointer_type" || node.type === "generic_type") return this.receiverType(node.namedChildren[0] ?? null);
+    return null;
+  }
+
+  private typeName(node: SyntaxNode | null): string | null {
+    if (!node) return null;
+    if (node.type === "type_identifier") return node.text;
+    if (node.type === "pointer_type" || node.type === "generic_type") return this.typeName(node.namedChildren[0] ?? null);
+    if (node.type === "qualified_type") return node.childForFieldName("name")?.text ?? null;
+    return null;
+  }
+
+  private literalType(node: SyntaxNode | null): string | null {
+    if (!node) return null;
+    if (node.type === "unary_expression") return this.literalType(node.childForFieldName("operand"));
+    if (node.type === "composite_literal") return this.typeName(node.childForFieldName("type"));
     return null;
   }
 

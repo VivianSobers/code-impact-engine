@@ -32,6 +32,7 @@ export const confidence = {
   imported: 0.9,
   samePackage: 0.85,
   importedMember: 0.85,
+  typedReceiver: 0.85,
   wildcard: 0.8,
   staticMember: 0.8,
   unique: 0.6,
@@ -46,21 +47,19 @@ const callableKinds = new Set(["function", "method", "class"]);
 
 const builtinMembers: Record<string, Set<string>> = {
   javascript: new Set([
-    "push", "pop", "shift", "unshift", "slice", "splice", "concat", "map", "filter", "reduce", "forEach", "find", "findIndex",
-    "some", "every", "includes", "indexOf", "join", "split", "replace", "trim", "toString", "valueOf", "get", "set", "has",
-    "delete", "clear", "add", "keys", "values", "entries", "then", "catch", "finally", "log", "error", "warn", "info", "debug",
-    "parse", "stringify", "apply", "call", "bind", "sort", "flat", "flatMap", "at", "fill", "test", "exec", "match",
+    "push", "pop", "shift", "unshift", "slice", "splice", "concat", "map", "filter", "reduce", "forEach", "findIndex",
+    "some", "every", "includes", "indexOf", "join", "split", "replace", "trim", "toString", "valueOf", "keys", "values",
+    "entries", "then", "catch", "finally", "log", "warn", "stringify", "apply", "call", "bind", "flat", "flatMap",
   ]),
   python: new Set([
-    "append", "extend", "pop", "insert", "remove", "get", "items", "keys", "values", "update", "setdefault", "copy", "clear",
-    "join", "split", "strip", "replace", "format", "startswith", "endswith", "lower", "upper", "encode", "decode", "read",
-    "write", "close", "add", "discard", "sort", "index", "count",
+    "append", "extend", "items", "keys", "values", "setdefault", "join", "split", "strip", "startswith", "endswith",
+    "lower", "upper", "encode", "decode", "format",
   ]),
   java: new Set([
-    "add", "get", "set", "put", "remove", "size", "isEmpty", "contains", "equals", "hashCode", "toString", "stream", "map",
-    "filter", "collect", "forEach", "println", "print", "printf", "append", "length", "charAt", "substring", "valueOf", "close",
+    "equals", "hashCode", "toString", "stream", "collect", "forEach", "println", "print", "printf", "charAt", "substring",
+    "length", "size", "isEmpty",
   ]),
-  go: new Set(["Println", "Printf", "Sprintf", "Errorf", "Error", "String", "Close", "Lock", "Unlock", "Add", "Done", "Wait"]),
+  go: new Set(["Println", "Printf", "Sprintf", "Errorf"]),
 };
 const httpMethods = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]);
 
@@ -202,6 +201,10 @@ export class CallGraph {
             const found = classes.flatMap((owner) => this.methodsOf(family, owner.name, name).filter((symbol) => symbol.path === owner.path));
             return this.spread(found, confidence.importedMember);
           },
+          () => {
+            const type = file.facts.localTypes.get(receiverName);
+            return type ? this.spread(this.methodsOf(family, type, name), confidence.typedReceiver) : [];
+          },
           () => this.spread(this.methodsOf(family, member, name), confidence.staticMember),
           anyMethod,
         ]);
@@ -273,7 +276,7 @@ export class CallGraph {
         entries.add(symbol.id);
       } else if (symbol.owner === null && symbol.exported && httpMethods.has(symbol.name) && /(^|\/)route\.[cm]?[jt]sx?$/.test(symbol.path)) {
         entries.add(symbol.id);
-      } else if (symbol.owner === null && symbol.exported && (symbol.kind === "function" || symbol.kind === "class") && !called.has(symbol.id)) {
+      } else if (symbol.owner === null && symbol.exported && (symbol.kind === "function" || (symbol.kind === "class" && symbol.family !== "go")) && !called.has(symbol.id)) {
         entries.add(symbol.id);
       }
     }

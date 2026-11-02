@@ -18,6 +18,15 @@ export class PythonExtractor extends Extractor {
         return this.importStatement(node);
       case "import_from_statement":
         return this.importFrom(node);
+      case "typed_parameter":
+        this.recordType(node.namedChildren.find((child) => child.type === "identifier")?.text, this.typeName(node.childForFieldName("type")));
+        return this.visitChildren(node, scope);
+      case "typed_default_parameter":
+        this.recordType(node.childForFieldName("name")?.text, this.typeName(node.childForFieldName("type")));
+        return this.visitChildren(node, scope);
+      case "assignment":
+        this.assignment(node);
+        return this.visitChildren(node, scope);
       case "if_statement":
         if (scope.symbol === 0 && mainGuard.test(node.childForFieldName("condition")?.text.trim() ?? "")) {
           this.facts.mainGuard = true;
@@ -48,6 +57,22 @@ export class PythonExtractor extends Extractor {
       exported: scope.symbol === 0 && !name.startsWith("_"),
     });
     this.visitChildren(node, this.enter(scope, index, { owner: name, classBody: true }));
+  }
+
+  private typeName(node: SyntaxNode | null): string | null {
+    const text = node?.text.trim().replace(/^["']|["']$/g, "");
+    if (!text || !/^[A-Za-z_][\w.]*$/.test(text)) return null;
+    return text.split(".").pop() ?? null;
+  }
+
+  private assignment(node: SyntaxNode): void {
+    const target = this.dottedName(node.childForFieldName("left"), memberTypes, ["object", "attribute"]);
+    const right = node.childForFieldName("right");
+    const annotated = this.typeName(node.childForFieldName("type"));
+    const callee = right?.type === "call" ? right.childForFieldName("function") : null;
+    const constructed = callee ? this.dottedName(callee, memberTypes, ["object", "attribute"])?.split(".").pop() : null;
+    const type = annotated ?? (constructed && /^[A-Z]/.test(constructed) ? constructed : null);
+    this.recordType(target, type);
   }
 
   private receiver(node: SyntaxNode | null): Receiver {

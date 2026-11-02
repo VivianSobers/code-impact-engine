@@ -49,4 +49,5 @@ export interface FileFacts {
   mainGuard: boolean;
   topLevelCalls: number;
   defaultExport: string | null;
+  localTypes: Map<string, string | null>;
 }
