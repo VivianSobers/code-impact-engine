@@ -115,6 +115,29 @@ A symbol gets `is_entry_point = true` when it is:
 
 Files under `node_modules`, `vendor`, `third_party`, `dist`, `build`, `out`, `.next`, `coverage`, `__pycache__` and virtualenv directories are skipped. So are minified bundles, `.d.ts`, protobuf and other generated files, files over 1 MB, files with lines over 5000 characters or an average line over 300, and files containing NUL bytes. They are counted in `skipped`.
 
+## History
+
+```
+npm run history -- seed-repo
+npm run history -- 3
+```
+
+`history/` runs after the parser. It takes a repository name, URL or `repo_id`, reads `git log` from the checkout the parser used (`ingest/workdir/<owner>-<repo>` for a git URL, the original directory for a local path) and fills `author`, `author_email`, `commit` and `modifies`. The last line on stdout is a JSON summary:
+
+```
+{"repoId":1,"commits":10,"authors":3,"modifies":53,"unmatched":0,"durationMs":283}
+```
+
+Every commit on every branch is read, oldest first, with a zero-context patch. Merge commits are stored but get no changes of their own, since their changes are already counted on the commits that made them.
+
+For each changed file in a supported language, the step parses the file before and after the commit with the same extractor as the parser, then counts the added lines that fall inside each symbol's new span and the removed lines inside its old span. A line inside a method counts for the method and for its class. Module symbols are left out. A symbol that did not exist before the commit is `added`, otherwise `modified`. File versions are read through one `git cat-file --batch` process and parsed once per blob.
+
+Changes are matched to the current symbols of the repository by path, kind, name and position among symbols with the same name. Changes to code that has since been deleted, renamed or moved to another file have no current symbol and are counted as `unmatched`. On express (6184 commits) that was 2356 of 3324 symbol changes, while all 71 symbols in `lib/` got history.
+
+Commits are grouped into people when they share a name (ignoring case and spacing) or an email address, which is how one person with two addresses becomes one author with two `author_email` rows. The name is the spelling used most often. The company comes from the domain of the latest work address; personal and no-reply domains such as gmail.com or users.noreply.github.com give no company.
+
+Running the step again replaces the repository's commits and changes in one transaction. Authors are shared between repositories, so they are only added or updated. Re-running the parser deletes the repository's symbols and with them its `modifies` rows, so run `history` again after `parse`.
+
 ## Seed repository
 
 ```
@@ -143,7 +166,7 @@ npm test
 npm run typecheck
 ```
 
-The unit tests need no database. The integration test builds the seed repo and ingests it twice into Postgres database `cie_t_ingest` and Mongo database `cie_t_ingest`, applying `db/schema` and `db/functions` first if the tables are missing. It skips with a message when either database is unreachable. Override the targets with `INGEST_TEST_DATABASE_URL`, `INGEST_TEST_MONGODB_URI` and `INGEST_TEST_MONGODB_DB`.
+`npm test` runs the test files one at a time, because the parser and history integration tests both rebuild `workdir/seed-repo`. The unit tests need no database. The integration test builds the seed repo and ingests it twice into Postgres database `cie_t_ingest` and Mongo database `cie_t_ingest`, applying `db/schema` and `db/functions` first if the tables are missing. It skips with a message when either database is unreachable. Override the targets with `INGEST_TEST_DATABASE_URL`, `INGEST_TEST_MONGODB_URI` and `INGEST_TEST_MONGODB_DB`. The history integration test uses its own database `cie_t_history` on the same server (`INGEST_TEST_SERVER_URL`, default `postgresql://cie:change-me@localhost:5432`) and creates it when it is missing, so it only skips when the server itself is unreachable.
 
 ## Limitations
 

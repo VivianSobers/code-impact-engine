@@ -59,8 +59,11 @@ npm install
 cd ingest
 npm install
 npm run seed
+npm run history -- seed-repo
 cd ..
 ```
+
+`npm run seed` parses the seed repository and `npm run history` reads its commits. For another repository, run `npm run parse -- <git-url-or-path>` and then `npm run history -- <name>`; see [ingest/README.md](ingest/README.md).
 
 Run the app:
 
