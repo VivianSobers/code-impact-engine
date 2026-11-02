@@ -51,7 +51,8 @@ export function groupAuthors(commits: CommitAuthor[]): AuthorGroup[] {
   commits.forEach((commit, i) => {
     const email = commit.authorEmail.trim().toLowerCase();
     const name = normaliseName(commit.authorName) || email;
-    for (const key of [`n:${name}`, `e:${email}`]) {
+    const keys = [name && `n:${name}`, email && `e:${email}`].filter(Boolean) as string[];
+    for (const key of keys) {
       const first = firstByKey.get(key);
       if (first === undefined) firstByKey.set(key, i);
       else parent[find(i)] = find(first);
@@ -80,7 +81,7 @@ export function groupAuthors(commits: CommitAuthor[]): AuthorGroup[] {
         const spelling = commits[i].authorName.trim().replace(/\s+/g, " ");
         if (spelling && (uses.get(spelling) ?? 0) >= (uses.get(name) ?? 0)) name = spelling;
       }
-      const emails = [...new Set(members.map((i) => commits[i].authorEmail.trim().toLowerCase()))].sort();
+      const emails = [...new Set(members.map((i) => commits[i].authorEmail.trim().toLowerCase()))].filter(Boolean).sort();
       const company =
         byTime
           .map((i) => companyFromEmail(commits[i].authorEmail))
