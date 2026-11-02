@@ -71,4 +71,19 @@ BEGIN
     END IF;
 END $$;
 
+-- v_author_activity: every author, including one with no commits.
+DO $$
+DECLARE
+    v_rows text;
+BEGIN
+    SELECT string_agg(format('%s:%s:%s:%s:%s:%s:%s', name, array_to_string(emails, ','), repos, commits, churn,
+                             coalesce(first_commit::date::text, '-'), coalesce(last_commit::date::text, '-')), ' '
+                      ORDER BY name)
+    INTO v_rows
+    FROM v_author_activity WHERE name IN ('Ana', 'Ben', 'Cleo');
+    IF v_rows IS DISTINCT FROM 'Ana:ana@example.com:1:2:16:2026-09-01:2026-09-03 Ben:ben@example.com:1:1:12:2026-09-02:2026-09-02 Cleo:cleo@example.com:0:0:0:-:-' THEN
+        RAISE EXCEPTION 'unexpected author activity: %', v_rows;
+    END IF;
+END $$;
+
 ROLLBACK;
