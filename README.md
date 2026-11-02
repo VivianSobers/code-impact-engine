@@ -42,3 +42,6 @@ Setup and run instructions will go here once `docker-compose.yml` and the Next.j
 
 - [ER diagram and relational schema](docs/ER_Relational_Schema.pdf)
 - [Work split between team members](docs/WORK_SPLIT.md)
+- [Code structure queries](docs/STRUCTURE_QUERIES.md)
+- [Code structure test results](docs/STRUCTURE_TEST_RESULTS.md)
+- [Code structure screenshots](docs/STRUCTURE_SCREENSHOTS.md)
