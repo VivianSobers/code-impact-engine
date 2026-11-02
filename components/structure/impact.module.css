@@ -1,0 +1,179 @@
+.searchForm {
+  display: grid;
+  grid-template-columns: minmax(14rem, 2.5fr) minmax(10rem, 1fr) auto;
+  gap: 0.9rem;
+  align-items: end;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.searchForm input[type="search"] {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .searchForm {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.target {
+  margin-top: 2.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--rule);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.9rem;
+  margin-top: 1.25rem;
+}
+
+.radius {
+  margin-top: 2rem;
+}
+
+.radiusHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 2.5rem;
+}
+
+.count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.count strong {
+  font-family: var(--mono);
+  font-size: 2.6rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.count span {
+  color: var(--muted);
+}
+
+.strip {
+  display: flex;
+  height: 0.9rem;
+  margin: 1rem 0 0.45rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--wash);
+}
+
+.strip span {
+  min-width: 4px;
+}
+
+.stripLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.stripLegend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 1px;
+}
+
+.entryPoints {
+  margin-top: 2rem;
+  padding: 1rem 1.2rem;
+  background: var(--link-soft);
+  border-radius: 4px;
+}
+
+.entryPoints h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--link);
+}
+
+.entryPoints > ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entryPoints > ul > li {
+  padding: 0.45rem 0;
+  border-top: 1px solid rgba(29, 90, 133, 0.18);
+}
+
+.entryPoints > ul > li:first-child {
+  border-top: 0;
+}
+
+.band {
+  margin-top: 2rem;
+  padding-left: 1rem;
+  border-left: 4px solid var(--band, var(--heat-4));
+}
+
+.bandTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.bandTitle span {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.path li + li::before {
+  content: "\203A";
+  margin-right: 0.35rem;
+  color: var(--faint);
+}
+
+.path a {
+  color: var(--muted);
+}
+
+.pathTarget {
+  color: var(--ink);
+  font-weight: 500;
+}
