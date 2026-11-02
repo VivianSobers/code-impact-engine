@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { RepoFilter } from "@/components/history/RepoFilter";
-import history from "@/components/history/history.module.css";
 import { KindBadge } from "@/components/structure/badges";
 import { Shell } from "@/components/structure/Shell";
 import styles from "@/components/structure/structure.module.css";
@@ -35,7 +34,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <header className={styles.header}>
         <h1 className={styles.title}>Search by meaning</h1>
         <p className={styles.lede}>
-          Describe what a piece of code does in plain words. Results are the functions and classes whose bodies are
+          Describe what a piece of code does in plain words. Results are the functions and methods whose bodies are
           closest to the description, using the same code embedding model the ingest step used. Only repositories that
           have been embedded (npm run embed) are searched.
         </p>
@@ -68,7 +67,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                   <th scope="col">Symbol</th>
                   <th scope="col">Where</th>
                   <th scope="col">Repository</th>
-                  <th scope="col" className={history.num} title="Cosine similarity between the description and the symbol body">
+                  <th scope="col" className={styles.num} title="Cosine similarity between the description and the symbol body">
                     Similarity
                   </th>
                 </tr>
@@ -91,7 +90,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                       </Link>
                     </td>
                     <td>{r.repoName}</td>
-                    <td className={history.num}>{r.similarity.toFixed(3)}</td>
+                    <td className={styles.num}>{r.similarity.toFixed(3)}</td>
                   </tr>
                 ))}
               </tbody>
