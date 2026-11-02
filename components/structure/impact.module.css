@@ -2,11 +2,12 @@
   display: grid;
   grid-template-columns: minmax(14rem, 2.5fr) minmax(10rem, 1fr) auto;
   gap: 0.9rem;
-  align-items: end;
+  align-items: flex-end;
   padding: 1.1rem 1.2rem;
   background: var(--surface);
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
 }
 
 .searchForm input[type="search"] {
@@ -108,7 +109,7 @@
 .controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   gap: 0.9rem;
   margin-top: 1.25rem;
 }

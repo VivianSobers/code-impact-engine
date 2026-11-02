@@ -23,7 +23,8 @@ export async function Shell({ section, children }: { section?: Section; children
     <div className={`${plexSans.variable} ${plexMono.variable} ${styles.shell}`}>
       <header className={styles.bar}>
         <Link href="/dashboard" className={styles.brand}>
-          Code impact engine
+          <span className={styles.brandBadge} aria-hidden="true">⚡</span>
+          <span className={styles.brandName}>Code Impact Engine</span>
         </Link>
         <nav aria-label="Sections" className={styles.sectionNav}>
           {SECTIONS.filter((s) => !s.adminOnly || user?.role === "admin").map((s) => (
