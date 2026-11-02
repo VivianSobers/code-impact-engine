@@ -38,3 +38,24 @@ CREATE TABLE commit (
 CREATE INDEX commit_repo_time_idx ON commit (repo_id, committed_at DESC);
 CREATE INDEX commit_author_idx ON commit (author_id);
 CREATE INDEX commit_message_search_idx ON commit USING gin (message_search);
+
+-- Which symbols a commit touched, and how much. Rows cascade away with their symbol
+-- because re-parsing a repository deletes and recreates its symbols.
+CREATE TABLE modifies (
+    commit_id   bigint  NOT NULL,
+    symbol_id   bigint  NOT NULL,
+    additions   integer NOT NULL,
+    deletions   integer NOT NULL,
+    change_type text    NOT NULL,
+    CONSTRAINT modifies_pkey PRIMARY KEY (commit_id, symbol_id),
+    CONSTRAINT modifies_commit_fkey FOREIGN KEY (commit_id)
+        REFERENCES commit (commit_id) ON DELETE CASCADE,
+    CONSTRAINT modifies_symbol_fkey FOREIGN KEY (symbol_id)
+        REFERENCES symbol (symbol_id) ON DELETE CASCADE,
+    CONSTRAINT modifies_additions_nonnegative CHECK (additions >= 0),
+    CONSTRAINT modifies_deletions_nonnegative CHECK (deletions >= 0),
+    CONSTRAINT modifies_changes_something CHECK (additions + deletions > 0),
+    CONSTRAINT modifies_change_type_known CHECK (change_type IN ('added', 'modified'))
+);
+
+CREATE INDEX modifies_symbol_idx ON modifies (symbol_id);

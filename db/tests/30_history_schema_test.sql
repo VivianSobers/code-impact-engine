@@ -88,4 +88,63 @@ BEGIN
     END IF;
 END $$;
 
+-- modifies
+
+INSERT INTO file (repo_id, path, language, loc, content_hash)
+VALUES (pg_temp.repo(), 'src/money.ts', 'typescript', 30, repeat('0', 64));
+
+INSERT INTO symbol (repo_id, path, name, kind, start_line, end_line)
+VALUES
+    (pg_temp.repo(), 'src/money.ts', 'roundCurrency', 'function', 1, 5),
+    (pg_temp.repo(), 'src/money.ts', 'formatMoney', 'function', 7, 12);
+
+CREATE FUNCTION pg_temp.sym(p_name text) RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT symbol_id FROM symbol WHERE repo_id = pg_temp.repo() AND name = p_name
+$$;
+
+CREATE FUNCTION pg_temp.cmt(p_char text) RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT commit_id FROM commit WHERE repo_id = pg_temp.repo() AND sha = repeat(p_char, 40)
+$$;
+
+INSERT INTO modifies (commit_id, symbol_id, additions, deletions, change_type)
+VALUES
+    (pg_temp.cmt('a'), pg_temp.sym('roundCurrency'), 5, 0, 'added'),
+    (pg_temp.cmt('b'), pg_temp.sym('roundCurrency'), 1, 1, 'modified'),
+    (pg_temp.cmt('b'), pg_temp.sym('formatMoney'), 6, 0, 'added');
+
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO modifies VALUES (%s, %s, -1, 0, 'modified')$q$,
+    pg_temp.cmt('a'), pg_temp.sym('formatMoney')), '23514', 'modifies_additions_nonnegative');
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO modifies VALUES (%s, %s, 0, 0, 'modified')$q$,
+    pg_temp.cmt('a'), pg_temp.sym('formatMoney')), '23514', 'modifies_changes_something');
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO modifies VALUES (%s, %s, 1, 0, 'renamed')$q$,
+    pg_temp.cmt('a'), pg_temp.sym('formatMoney')), '23514', 'modifies_change_type_known');
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO modifies VALUES (%s, %s, 1, 0, 'modified')$q$,
+    pg_temp.cmt('a'), pg_temp.sym('roundCurrency')), '23505', 'modifies_pkey');
+
+-- The parser re-ingests a repository by deleting its files, which deletes symbols.
+-- History rows must go with them instead of blocking the delete.
+DELETE FROM symbol WHERE symbol_id = pg_temp.sym('formatMoney');
+
+DO $$
+BEGIN
+    IF (SELECT count(*) FROM modifies WHERE commit_id = pg_temp.cmt('b')) <> 1 THEN
+        RAISE EXCEPTION 'deleting a symbol should delete its modifies rows';
+    END IF;
+END $$;
+
+DELETE FROM commit WHERE commit_id = pg_temp.cmt('a');
+
+DO $$
+BEGIN
+    IF (SELECT count(*) FROM modifies) <> 1 THEN
+        RAISE EXCEPTION 'deleting a commit should delete its modifies rows';
+    END IF;
+END $$;
+
 ROLLBACK;
