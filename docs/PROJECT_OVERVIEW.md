@@ -18,3 +18,22 @@ This project reads a Git repository into a database and answers those questions 
 4. Show change hotspots, per-file ownership and per-author churn from views over that history.
 5. Embed every function and method body with a local code embedding model, search them with a plain-language description, and group near-duplicates into clone clusters that an admin reviews.
 6. Put all of this behind a Next.js web app with two roles, Admin and Developer, enforced both in the app and in the database.
+
+## Scope
+
+In scope:
+
+- Repositories reachable by `git clone` (public HTTPS or SSH URLs) and local folders.
+- Source files in the five languages above. Other files are listed but not parsed.
+- Calls are resolved by name within the repository, with a confidence score. A call through a variable or a dynamic import may be missed or resolved to the wrong function; the score records how sure the resolver was.
+- History on every branch, oldest commit first. Merge commits are recorded but their diffs are not counted again, because the changes are already counted on the commits that made them.
+- One embedding model, `jinaai/jina-embeddings-v2-base-code`, run locally on the CPU. No code leaves the machine.
+- Two roles. Developers can read everything. Admins can also add repositories, review clone clusters and manage users.
+
+Out of scope:
+
+- Type-aware call resolution (for example, which of two `save` methods a call reaches through an interface).
+- Runtime information such as coverage or profiling data.
+- Watching a repository for new commits. Ingestion is re-run by hand.
+- Self-service sign-up and password reset. An admin creates every account.
+- Hosting. The app runs locally against Docker Compose databases.
