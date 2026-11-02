@@ -1,0 +1,107 @@
+.tree {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.head {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--paper);
+  border-bottom: 1px solid var(--rule);
+  border-radius: 4px 4px 0 0;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6.5rem 4.5rem 4.5rem;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.38rem 0.8rem 0.38rem calc(0.8rem + var(--depth, 0) * 1.15rem);
+}
+
+.cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cell:first-of-type {
+  text-align: left;
+}
+
+.name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.file .name a {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.file,
+.dir {
+  border-bottom: 1px solid #edf0ee;
+}
+
+.dir {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+}
+
+.dir::-webkit-details-marker {
+  display: none;
+}
+
+.dir:hover,
+.file:hover {
+  background: #fafbfa;
+}
+
+.dirName {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.dirName::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin: 0 0.5rem 0.1rem 0;
+  border-style: solid;
+  border-width: 0.3rem 0 0.3rem 0.42rem;
+  border-color: transparent transparent transparent var(--muted);
+  transition: transform 120ms ease;
+}
+
+details[open] > .dir .dirName::before {
+  transform: rotate(90deg);
+}
+
+.tree > .list > li:last-child > .file,
+.tree > .list > li:last-child > details:not([open]) > .dir {
+  border-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) 4rem 4rem;
+  }
+
+  .row .cell:first-of-type {
+    display: none;
+  }
+}
