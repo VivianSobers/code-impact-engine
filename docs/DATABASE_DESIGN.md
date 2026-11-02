@@ -139,3 +139,31 @@ Vivian's DDL (issue #12) defines these. The columns and keys below come from the
 ### MongoDB `ast` collection
 
 Each parsed file has one document, linked from `file.ast_doc_id`. The document model, validator, indexes and aggregation pipelines are described in [MONGODB_AST.md](MONGODB_AST.md).
+
+## Why three kinds of storage
+
+### PostgreSQL for the code structure
+
+Repositories, files, symbols, calls and imports are fixed in shape and heavily linked. Every symbol belongs to exactly one file, and every call joins two symbols. Foreign keys with cascades let one transaction replace a repository's whole structure without leaving dangling calls behind. CHECK constraints catch parser bugs at insert time, such as an inverted span or a confidence of 1.5.
+
+The main question the engine answers is "what breaks if I change this?". That means following CALLS backwards a few levels. A recursive CTE handles it in PostgreSQL, with the callee index keeping each step an index lookup. We considered a graph database such as Neo4j. It would make traversal syntax shorter, but the call graph would then live apart from the commits and clone data it gets joined with, and every query would cross two systems. The graphs here are per repository and a few levels deep, which SQL handles well.
+
+PostgreSQL also gives full-text search over symbol names and signatures through a `tsvector` column and a GIN index, so search needs no separate engine.
+
+### MongoDB for ASTs
+
+A syntax tree has a different shape for every language and every file. A JavaScript arrow function, a Python decorator and a Go method receiver produce different node types and nesting. Storing the trees relationally would need a generic node table with tens of thousands of rows per file and a self-join for every level of nesting. Nothing ever joins an individual AST node to another table. The app reads a file's tree as a unit, or aggregates over nodes, for example to count node types per language.
+
+That fits a document store: one document per file, fetched by key, with aggregation pipelines for the statistics. The relational side keeps only `ast_doc_id`, so a file row stays small and the ASTs can be rebuilt without touching the relational data.
+
+### pgvector for embeddings
+
+Clone detection and semantic search compare symbol embeddings by cosine distance. pgvector adds a vector type and an HNSW index to the same PostgreSQL instance. A nearest-neighbour query can then join straight to SYMBOL, FILE and CLONE_CLUSTER, and embeddings are dropped in the same transaction as the symbols they describe. A separate vector database would have meant a third server and keeping its IDs in sync with SYMBOL by hand.
+
+### Summary
+
+| Need | Store | Reason |
+|---|---|---|
+| Structure, history, users | PostgreSQL 16 | Fixed schema, foreign keys, transactions, recursive queries |
+| Per-file syntax trees | MongoDB 7 | Schema varies by language, read as a whole, aggregated over nodes |
+| Symbol embeddings | pgvector | Similarity search next to the rows it joins with |
