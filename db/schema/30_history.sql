@@ -106,3 +106,10 @@ CREATE TABLE waives (
 );
 
 CREATE INDEX waives_symbol_idx ON waives (symbol_id);
+
+-- symbol.cluster_id already exists as a plain column in 10_structure.sql.
+ALTER TABLE symbol
+    ADD CONSTRAINT symbol_cluster_fkey FOREIGN KEY (cluster_id)
+        REFERENCES clone_cluster (cluster_id) ON DELETE SET NULL;
+
+CREATE INDEX symbol_cluster_idx ON symbol (cluster_id) WHERE cluster_id IS NOT NULL;

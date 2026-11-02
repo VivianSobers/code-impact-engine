@@ -240,4 +240,21 @@ BEGIN
     END IF;
 END $$;
 
+-- symbol.cluster_id
+
+INSERT INTO clone_cluster (similarity_score) VALUES (0.960);
+UPDATE symbol SET cluster_id = pg_temp.cluster() WHERE symbol_id = pg_temp.sym('roundTotal');
+
+SELECT pg_temp.rejects(
+    $q$UPDATE symbol SET cluster_id = 999999999 WHERE name = 'roundTotal'$q$, '23503', 'symbol_cluster_fkey');
+
+DELETE FROM clone_cluster WHERE cluster_id = pg_temp.cluster();
+
+DO $$
+BEGIN
+    IF (SELECT cluster_id FROM symbol WHERE symbol_id = pg_temp.sym('roundTotal')) IS NOT NULL THEN
+        RAISE EXCEPTION 'deleting a cluster should set its members'' cluster_id to null';
+    END IF;
+END $$;
+
 ROLLBACK;
