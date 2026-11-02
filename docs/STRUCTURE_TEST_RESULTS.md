@@ -142,13 +142,13 @@ The same pipeline ran on real data here with the same effect. `deepestNestingPer
 
 ## Fixed during this testing
 
-Real repositories and the screenshot review turned up four problems, all fixed on their own branches:
+Real repositories and the screenshot review turned up four problems, all fixed:
 
-| Branch | Commit | Problem |
+| Where | Commit | Problem |
 |--------|--------|---------|
 | `guru/ingest-parse` | `9ba713f` | Comments ended up in signatures, as in `def test_x(self): # from issue #6935` |
-| `guru/repo-browser` | `1056fd9` | The add-repository message said "1 files were skipped" |
-| `guru/repo-browser` | `0d2a590` | Language headings read "Typescript" and "Javascript" |
+| `main` | `e18ed20` | The add-repository message said "1 files were skipped" |
+| `main` | `94aceb9` | Language headings read "Typescript" and "Javascript" |
 | `guru/call-graph-impact` | `bd16107` | At depth 2 the outer callee column sat off screen |
 
 The signature fix handles a comment that follows the header. Two signatures in requests still contain a comment, because the comment sits inside the parameter list: `def get( # type: ignore[override] self, ...`.
