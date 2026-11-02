@@ -20,3 +20,15 @@ export function plural(count: number, one: string, many = `${one}s`): string {
 export function percent(share: number): string {
   return `${(share * 100).toFixed(share < 0.1 ? 1 : 0)}%`;
 }
+
+const languageNames: Record<string, string> = {
+  javascript: "JavaScript",
+  typescript: "TypeScript",
+  python: "Python",
+  java: "Java",
+  go: "Go",
+};
+
+export function languageName(language: string): string {
+  return languageNames[language] ?? language;
+}

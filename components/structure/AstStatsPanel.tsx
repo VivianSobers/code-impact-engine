@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getAstStats } from "@/lib/structure/ast";
-import { formatNumber, percent } from "@/lib/structure/format";
+import { formatNumber, languageName, percent } from "@/lib/structure/format";
 import { encodePath } from "@/lib/structure/params";
 import panel from "./astStats.module.css";
 import styles from "./structure.module.css";
@@ -25,7 +25,7 @@ export async function AstStatsPanel({ repoId }: { repoId: number }) {
         return (
           <section key={lang.language} aria-labelledby={`ast-${lang.language}`} className={panel.language}>
             <h3 id={`ast-${lang.language}`} className={panel.heading}>
-              <span className={panel.languageName}>{lang.language}</span>
+              <span>{languageName(lang.language)}</span>
               <span className={panel.meta}>
                 {formatNumber(lang.total_nodes)} nodes, {formatNumber(lang.distinct_types)} node types
               </span>
