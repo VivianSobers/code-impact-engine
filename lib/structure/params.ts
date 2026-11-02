@@ -29,7 +29,12 @@ export function parseBoundedInt(
 }
 
 export function joinPathSegments(segments: string[]): string {
-  const path = segments.map((s) => decodeURIComponent(s)).join("/");
+  let path: string;
+  try {
+    path = segments.map((s) => decodeURIComponent(s)).join("/");
+  } catch {
+    throw new BadRequestError("file path is not valid");
+  }
   if (path === "" || path.startsWith("/") || path.split("/").some((s) => s === "" || s === "." || s === "..")) {
     throw new BadRequestError("file path is not valid");
   }
