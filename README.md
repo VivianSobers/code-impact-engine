@@ -36,7 +36,49 @@ These folders get created as the work lands.
 
 ## Setup
 
-Setup and run instructions will go here once `docker-compose.yml` and the Next.js app exist. Database credentials come from environment variables. Copy `.env.example` to `.env` and fill it in; `.env` is git-ignored.
+You need Node 20 or newer, Git, and Docker with Compose.
+
+Database credentials and secrets come from environment variables. Copy the template and fill it in; `.env` is git-ignored:
+
+```sh
+cp .env.example .env
+```
+
+Start Postgres (with pgvector) and MongoDB:
+
+```sh
+docker compose up -d
+```
+
+On the first start the Postgres container applies every `.sql` file in `db/schema`, `db/functions`, `db/views` and `db/seed`, in that folder order and in filename order inside each folder. It only does this when the data volume is new. After adding or changing a SQL file, recreate the volume with `docker compose down -v` (this deletes the local data) or apply the file with `psql`.
+
+Install the app and the ingest tools, then load the seed repository:
+
+```sh
+npm install
+cd ingest
+npm install
+npm run seed
+cd ..
+```
+
+Run the app:
+
+```sh
+npm run dev
+```
+
+It listens on http://localhost:3000. For a production build use `npm run build` and then `npm start`.
+
+### Tests
+
+```sh
+npm test                                  # app unit tests
+npm run typecheck                         # app type check
+cd ingest && npm test                     # parser tests
+docker compose exec -T postgres sh /cie-db/tests/run.sh   # SQL tests in a scratch database
+node --test tests/structure/api.test.mjs  # API smoke test against a running server
+```
 
 ## Documentation
 
