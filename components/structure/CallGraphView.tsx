@@ -61,7 +61,7 @@ export function CallGraphView({ data, title }: { data: CallGraph; title: string 
                   {clip(n.name, 24)}
                 </text>
                 <text x={n.x + 12} y={n.y + 35} className={graph.path}>
-                  {clipStart(n.path, 30)}
+                  {n.kind === "module" ? "top-level code" : clipStart(n.path, 30)}
                 </text>
                 {n.isEntryPoint && <rect x={n.x + NODE_WIDTH - 10} y={n.y + 6} width={4} height={NODE_HEIGHT - 12} className={graph.entryMark} />}
               </a>
