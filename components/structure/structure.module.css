@@ -53,8 +53,9 @@
 
 .bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 2.5rem;
+  gap: 0.6rem 2.5rem;
   padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
   border-bottom: 1px solid var(--rule);
   background: var(--surface);
@@ -71,7 +72,8 @@
 
 .sectionNav {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
 }
 
 .shell .sectionNav a {
