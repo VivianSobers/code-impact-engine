@@ -91,7 +91,8 @@ npm test                                  # app unit tests
 npm run typecheck                         # app type check
 cd ingest && npm test                     # parser tests
 docker compose exec -T postgres sh /cie-db/tests/run.sh   # SQL tests in a scratch database
-CIE_TEST_USERNAME=admin CIE_TEST_PASSWORD=... node --test tests/structure/api.test.mjs  # API smoke test against a running server
+CIE_TEST_USERNAME=admin CIE_TEST_PASSWORD=... node --test tests/structure/api.test.mjs  # Structure API smoke test
+CIE_TEST_USERNAME=ana CIE_TEST_PASSWORD=... node --test tests/history/api.test.mjs      # History & clones API smoke test
 ```
 
 ## Documentation
@@ -103,3 +104,6 @@ CIE_TEST_USERNAME=admin CIE_TEST_PASSWORD=... node --test tests/structure/api.te
 - [Code structure queries](docs/STRUCTURE_QUERIES.md)
 - [Code structure test results](docs/STRUCTURE_TEST_RESULTS.md)
 - [Code structure screenshots](docs/STRUCTURE_SCREENSHOTS.md)
+- [History, similarity and access queries](docs/HISTORY_QUERIES.md)
+- [History, similarity and access test results](docs/HISTORY_TEST_RESULTS.md)
+- [History, similarity and access screenshots](docs/HISTORY_SCREENSHOTS.md)
