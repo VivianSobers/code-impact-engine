@@ -1,13 +1,13 @@
 import type pg from "pg";
 import { CANDIDATE_SIMILARITY, CLONE_STRUCTURE, clusterPairs, NEIGHBOURS, type SimilarPair } from "./cluster";
-import { eligible } from "./store";
+import { cloneCandidate } from "./store";
 import { structuralSimilarity } from "./structure";
 
 type Client = pg.Client | pg.PoolClient;
 
 // Rebuilds the repository's open clusters in one transaction. Members of confirmed or
 // dismissed clusters and symbols someone has waived are left alone. bodies holds the
-// source of every eligible symbol, by symbol_id, for the structure check.
+// source of every embedded symbol, by symbol_id, for the structure check.
 export async function rebuildClusters(client: Client, repoId: number, bodies: Map<number, string>): Promise<number> {
   await client.query("BEGIN");
   try {
@@ -23,7 +23,7 @@ export async function rebuildClusters(client: Client, repoId: number, bodies: Ma
 
     const candidates = `
       SELECT s.symbol_id, e.embedding FROM symbol s JOIN symbol_embedding e USING (embedding_id)
-      WHERE s.repo_id = $1 AND s.cluster_id IS NULL AND ${eligible("s")}
+      WHERE s.repo_id = $1 AND s.cluster_id IS NULL AND ${cloneCandidate("s")}
         AND NOT EXISTS (SELECT 1 FROM waives w WHERE w.symbol_id = s.symbol_id)`;
     const pairs = await client.query<{ a: string; b: string; similarity: number }>(
       `WITH candidate AS (${candidates})
