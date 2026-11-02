@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { ImpactRow } from "@/lib/structure/impact";
 import { encodePath } from "@/lib/structure/params";
 import type { SymbolDetail } from "@/lib/structure/types";
 import styles from "./workflowGraph.module.css";
 import {
   computeWorkflowLayout,
-  NODE_HEIGHT,
-  NODE_WIDTH,
   traceConnectedPaths,
   type WorkflowNode,
 } from "./workflowLayout";
@@ -32,6 +30,8 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
   const [entryPointsOnly, setEntryPointsOnly] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(target.symbolId);
   const [hoveredNodeId, setHoveredNodeId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [tooltipData, setTooltipData] = useState<{ node: WorkflowNode; x: number; y: number } | null>(null);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -50,12 +50,25 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
     return traceConnectedPaths(focusId, layout);
   }, [hoveredNodeId, selectedNodeId, layout]);
 
+  // Matching symbols for search filter
+  const matchedNodeIds = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return null;
+    const matches = new Set<number>();
+    for (const node of layout.nodes) {
+      if (node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q) || node.kind.toLowerCase().includes(q)) {
+        matches.add(node.symbolId);
+      }
+    }
+    return matches;
+  }, [searchQuery, layout.nodes]);
+
   // Fit to screen calculation
   const fitToView = useCallback(() => {
     if (!viewportRef.current) return;
     const { clientWidth, clientHeight } = viewportRef.current;
     if (clientWidth <= 0 || clientHeight <= 0) return;
-    const padding = 32;
+    const padding = 36;
     const scaleX = (clientWidth - padding) / layout.width;
     const scaleY = (clientHeight - padding) / layout.height;
     const newScale = Math.min(Math.max(Math.min(scaleX, scaleY), 0.4), 1.15);
@@ -66,7 +79,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
     });
   }, [layout.width, layout.height]);
 
-  // Reset to natural 100% scale
+  // Reset zoom to natural 100%
   const resetZoom = () => {
     setScale(1);
     setPan({ x: 0, y: 0 });
@@ -76,9 +89,22 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
   const zoomIn = () => setScale((s) => Math.min(Number((s + 0.15).toFixed(2)), 2.2));
   const zoomOut = () => setScale((s) => Math.max(Number((s - 0.15).toFixed(2)), 0.35));
 
+  // Focus a specific node smoothly
+  const focusNode = (nodeId: number) => {
+    setSelectedNodeId(nodeId);
+    const node = layout.nodeMap.get(nodeId);
+    if (!node || !viewportRef.current) return;
+    const { clientWidth, clientHeight } = viewportRef.current;
+    const targetCenterX = clientWidth / 2;
+    const targetCenterY = clientHeight / 2;
+    setPan({
+      x: targetCenterX - (node.x + node.width / 2) * scale,
+      y: targetCenterY - (node.y + node.height / 2) * scale,
+    });
+  };
+
   // Mouse pan handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Only drag with primary mouse button
     if (e.button !== 0) return;
     setIsDragging(true);
     dragStartRef.current = {
@@ -112,6 +138,39 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
     }
   };
 
+  // Node hover handler with floating tooltip
+  const handleNodeMouseEnter = (node: WorkflowNode, e: React.MouseEvent) => {
+    setHoveredNodeId(node.symbolId);
+    if (viewportRef.current) {
+      const rect = viewportRef.current.getBoundingClientRect();
+      setTooltipData({
+        node,
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      });
+    }
+  };
+
+  const handleNodeMouseMove = (e: React.MouseEvent) => {
+    if (tooltipData && viewportRef.current) {
+      const rect = viewportRef.current.getBoundingClientRect();
+      setTooltipData((prev) =>
+        prev
+          ? {
+              ...prev,
+              x: e.clientX - rect.left,
+              y: e.clientY - rect.top,
+            }
+          : null,
+      );
+    }
+  };
+
+  const handleNodeMouseLeave = () => {
+    setHoveredNodeId(null);
+    setTooltipData(null);
+  };
+
   // Currently selected node object
   const selectedNode = selectedNodeId ? layout.nodeMap.get(selectedNodeId) : null;
   const upstreamCallers = selectedNodeId ? (layout.incomingEdges.get(selectedNodeId) ?? []) : [];
@@ -140,6 +199,19 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
           >
             ⚡ Entry Points Only ({entryCount})
           </button>
+
+          {/* Dynamic Highlight Search */}
+          <div className={styles.searchBoxWrapper}>
+            <span className={styles.searchIcon} aria-hidden="true">🔍</span>
+            <input
+              type="text"
+              placeholder="Highlight symbol..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.searchFilterInput}
+              aria-label="Filter symbols in workflow graph"
+            />
+          </div>
         </div>
 
         <div className={styles.toolbarSection}>
@@ -161,7 +233,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
         </div>
       </div>
 
-      {/* Main Graph Viewport: Crisp White Background */}
+      {/* Main Graph Viewport: Crisp White Background with Interactive Canvas */}
       <div className={styles.canvasCard}>
         <div
           ref={viewportRef}
@@ -169,12 +241,45 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          onMouseLeave={() => {
+            handleMouseUp();
+            handleNodeMouseLeave();
+          }}
           onWheel={handleWheel}
           tabIndex={0}
           role="region"
           aria-label="Interactive change impact workflow canvas"
         >
+          {/* Floating Dynamic Tooltip */}
+          {tooltipData && (
+            <div
+              className={styles.hoverTooltip}
+              style={{ left: `${tooltipData.x}px`, top: `${tooltipData.y}px` }}
+              aria-hidden="true"
+            >
+              <div className={styles.tooltipTitle}>{tooltipData.node.name}</div>
+              <div className={styles.tooltipRow}>
+                <span>Kind:</span>
+                <strong>{tooltipData.node.kind}</strong>
+              </div>
+              <div className={styles.tooltipRow}>
+                <span>Distance:</span>
+                <span>{tooltipData.node.isTarget ? "Target (0 steps)" : `${tooltipData.node.depth} step(s)`}</span>
+              </div>
+              {!tooltipData.node.isTarget && (
+                <div className={styles.tooltipRow}>
+                  <span>Min Confidence:</span>
+                  <strong>{(tooltipData.node.minConfidence * 100).toFixed(0)}%</strong>
+                </div>
+              )}
+              <div className={styles.tooltipRow}>
+                <span>Location:</span>
+                <span>{clipStart(tooltipData.node.path, 26)}</span>
+              </div>
+              <div className={styles.tooltipHint}>Click to select and open route box actions</div>
+            </div>
+          )}
+
           <svg
             className={styles.svg}
             width={Math.round(layout.width * scale)}
@@ -186,10 +291,11 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
             }}
           >
             <defs>
-              {/* Vibrant magenta target gradient */}
+              {/* Vibrant luxury magenta target gradient */}
               <linearGradient id="magenta-target-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#d946ef" />
-                <stop offset="100%" stopColor="#a21caf" />
+                <stop offset="50%" stopColor="#c026d3" />
+                <stop offset="100%" stopColor="#7e22ce" />
               </linearGradient>
 
               {/* Purple Arrowhead marker */}
@@ -220,7 +326,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
 
               {/* Purple glow filter for active connections */}
               <filter id="purple-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#9333ea" floodOpacity="0.75" />
+                <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#9333ea" floodOpacity="0.8" />
               </filter>
             </defs>
 
@@ -233,20 +339,31 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                     y={16}
                     width={st.width + 32}
                     height={layout.height - 32}
-                    rx={12}
+                    rx={14}
                     className={styles.stageBand}
                   />
-                  <text x={st.x + 8} y={38} className={styles.stageTitle}>
+                  {/* Stage Step Badge */}
+                  <rect
+                    x={st.x + 8}
+                    y={26}
+                    width={56}
+                    height={18}
+                    className={styles.stageStepBadge}
+                  />
+                  <text x={st.x + 36} y={35} className={styles.stageStepText}>
+                    {st.depth === 0 ? "TARGET" : `STEP ${String(st.depth).padStart(2, "0")}`}
+                  </text>
+                  <text x={st.x + 72} y={39} className={styles.stageTitle}>
                     {st.label}
                   </text>
-                  <text x={st.x + 8} y={53} className={styles.stageSubtitle}>
+                  <text x={st.x + 8} y={58} className={styles.stageSubtitle}>
                     {st.subtitle}
                   </text>
                 </g>
               ))}
             </g>
 
-            {/* Thin curved purple arrows */}
+            {/* Thin curved purple arrows with dynamic energy flow */}
             <g aria-label="Call workflow connections">
               {layout.edges.map((edge) => {
                 const isActive = activePaths ? activePaths.edges.has(edge.id) : false;
@@ -262,15 +379,25 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                   .join(" ");
 
                 return (
-                  <path
-                    key={edge.id}
-                    d={edge.d}
-                    className={classes}
-                    markerEnd={isActive ? "url(#purple-arrow-active)" : "url(#purple-arrow)"}
-                    filter={isActive ? "url(#purple-glow)" : undefined}
-                  >
-                    <title>{`Call resolved with confidence ${edge.confidence.toFixed(2)}`}</title>
-                  </path>
+                  <g key={edge.id}>
+                    {/* Base curved purple arrow */}
+                    <path
+                      d={edge.d}
+                      className={classes}
+                      markerEnd={isActive ? "url(#purple-arrow-active)" : "url(#purple-arrow)"}
+                      filter={isActive ? "url(#purple-glow)" : undefined}
+                    >
+                      <title>{`Call resolved with confidence ${edge.confidence.toFixed(2)}`}</title>
+                    </path>
+                    {/* Animated dynamic pulse flow along the curve */}
+                    {!isDimmed && (
+                      <path
+                        d={edge.d}
+                        className={isActive ? styles.edgeFlowActive : styles.edgeFlow}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </g>
                 );
               })}
             </g>
@@ -280,13 +407,17 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
               {layout.nodes.map((node) => {
                 const isSelected = selectedNodeId === node.symbolId;
                 const isHovered = hoveredNodeId === node.symbolId;
+                const isSearchMatch = matchedNodeIds ? matchedNodeIds.has(node.symbolId) : false;
+                const isSearchDimmed = matchedNodeIds ? !isSearchMatch : false;
                 const isActive = activePaths ? activePaths.nodes.has(node.symbolId) : false;
-                const isDimmed = activePaths ? !isActive : false;
+                const isPathDimmed = activePaths ? !isActive : false;
+                const isDimmed = isSearchDimmed || isPathDimmed;
 
                 const groupClasses = [
                   styles.nodeGroup,
                   node.isTarget && styles.nodeTarget,
                   isSelected && styles.nodeSelected,
+                  isSearchMatch && styles.nodeHighlightedMatch,
                   isDimmed && styles.nodeDimmed,
                 ]
                   .filter(Boolean)
@@ -301,8 +432,9 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                       e.stopPropagation();
                       setSelectedNodeId(node.symbolId);
                     }}
-                    onMouseEnter={() => setHoveredNodeId(node.symbolId)}
-                    onMouseLeave={() => setHoveredNodeId(null)}
+                    onMouseEnter={(e) => handleNodeMouseEnter(node, e)}
+                    onMouseMove={handleNodeMouseMove}
+                    onMouseLeave={handleNodeMouseLeave}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -313,10 +445,6 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                     role="button"
                     aria-label={`${node.name} (${node.kind})${node.isTarget ? ", modified target" : ""}${node.isEntryPoint ? ", entry point" : ""}`}
                   >
-                    <title>
-                      {`${node.name} (${node.kind})\nLocation: ${node.path}\n${node.isTarget ? "Modified target symbol" : `${node.depth} step(s) away from target`}${node.isEntryPoint ? "\nEntry point (external access route)" : ""}`}
-                    </title>
-
                     {/* Magenta rounded rectangle */}
                     <rect
                       x={0}
@@ -337,16 +465,16 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                     <rect
                       x={14}
                       y={10}
-                      width={Math.min(node.kind.length * 7 + 14, 75)}
+                      width={Math.min(node.kind.length * 7 + 16, 80)}
                       height={18}
                       rx={6}
-                      fill={node.isTarget ? "rgba(255, 255, 255, 0.25)" : "#fdf4ff"}
-                      stroke={node.isTarget ? "rgba(255, 255, 255, 0.5)" : "#f0abfc"}
+                      fill={node.isTarget ? "rgba(255, 255, 255, 0.28)" : "#fdf4ff"}
+                      stroke={node.isTarget ? "rgba(255, 255, 255, 0.6)" : "#f0abfc"}
                       strokeWidth={1}
                       className={styles.badgePill}
                     />
                     <text
-                      x={14 + Math.min(node.kind.length * 7 + 14, 75) / 2}
+                      x={14 + Math.min(node.kind.length * 7 + 16, 80) / 2}
                       y={20}
                       fill={node.isTarget ? "#ffffff" : "#a21caf"}
                       className={styles.badgeText}
@@ -358,16 +486,16 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                     {node.isTarget ? (
                       <g>
                         <rect
-                          x={node.width - 80}
+                          x={node.width - 82}
                           y={10}
-                          width={66}
+                          width={68}
                           height={18}
                           rx={6}
-                          fill="rgba(255, 255, 255, 0.9)"
+                          fill="rgba(255, 255, 255, 0.95)"
                           className={styles.badgePill}
                         />
                         <text
-                          x={node.width - 47}
+                          x={node.width - 48}
                           y={20}
                           fill="#86198f"
                           className={styles.badgeText}
@@ -405,7 +533,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                           textAnchor="end"
                           fill="#a21caf"
                           fontSize="10"
-                          fontWeight="600"
+                          fontWeight="700"
                           fontFamily="var(--mono)"
                         >
                           {node.depth === 1 ? "Step 1" : `Step ${node.depth}`}
@@ -442,7 +570,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
         </span>
         <span className={styles.legendItem}>
           <span className={styles.legendArrowSample} aria-hidden="true" />
-          <strong>Purple Curved Arrow</strong> (Invocation path)
+          <strong>Purple Curved Arrow</strong> (Live invocation flow)
         </span>
         <span className={styles.legendItem}>
           <span style={{ color: "#b91c1c", fontWeight: 700 }}>⚡ ENTRY</span>
@@ -450,7 +578,7 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
         </span>
       </div>
 
-      {/* Selection Inspector Drawer */}
+      {/* Selection Inspector Drawer with Rich Route Action Boxes */}
       {selectedNode && (
         <div className={styles.inspector} aria-live="polite">
           <div className={styles.inspectorHeader}>
@@ -460,103 +588,171 @@ export function WorkflowGraph({ target, rows, title = "Interactive Impact Workfl
                 {selectedNode.kind}
               </span>
               {selectedNode.isTarget && (
-                <span className={styles.pillButtonActive}>🎯 Modified Target</span>
+                <span className={styles.pillButtonActive}>🎯 Modified Target Symbol</span>
               )}
               {selectedNode.isEntryPoint && (
                 <span className={styles.pillButton} style={{ borderColor: "#ef4444", color: "#b91c1c", background: "#fef2f2" }}>
-                  ⚡ External Entry Point
+                  ⚡ External API Entry Point
                 </span>
               )}
-            </div>
-
-            <div className={styles.inspectorActions}>
-              <Link className={styles.actionBtn} href={`/symbols/${selectedNode.symbolId}`}>
-                View symbol
-              </Link>
-              <Link className={styles.actionBtn} href={`/symbols/${selectedNode.symbolId}/graph`}>
-                Call graph
-              </Link>
-              {!selectedNode.isTarget && (
-                <Link className={`${styles.actionBtn} ${styles.actionBtnPrimary}`} href={`/impact?symbol=${selectedNode.symbolId}`}>
-                  Analyse this impact
-                </Link>
-              )}
-              <Link
-                className={styles.actionBtn}
-                href={`/repositories/${selectedNode.repoId}/files/${encodePath(selectedNode.path)}`}
-              >
-                Open file
-              </Link>
             </div>
           </div>
 
           <div className={styles.inspectorMeta}>
             <div className={styles.inspectorMetaItem}>
-              <span className={styles.inspectorMetaLabel}>File:</span>
+              <span className={styles.inspectorMetaLabel}>Location:</span>
               <code>{selectedNode.path}</code>
             </div>
             <div className={styles.inspectorMetaItem}>
-              <span className={styles.inspectorMetaLabel}>Distance:</span>
-              <span>{selectedNode.isTarget ? "0 steps (Target)" : `${selectedNode.depth} step(s) away from target`}</span>
+              <span className={styles.inspectorMetaLabel}>Distance from Target:</span>
+              <span>{selectedNode.isTarget ? "0 steps (Target root)" : `${selectedNode.depth} step(s) away`}</span>
             </div>
             {!selectedNode.isTarget && (
               <div className={styles.inspectorMetaItem}>
-                <span className={styles.inspectorMetaLabel}>Min Confidence:</span>
+                <span className={styles.inspectorMetaLabel}>Min Resolution Confidence:</span>
                 <span>{(selectedNode.minConfidence * 100).toFixed(0)}%</span>
               </div>
             )}
           </div>
 
+          {/* Quick Route Box Grid for navigating to other pages */}
+          <div>
+            <div className={styles.routeSectionTitle}>Navigate to Page (Box Tiles):</div>
+            <div className={styles.routeBoxGrid}>
+              <Link className={styles.routeBox} href={`/symbols/${selectedNode.symbolId}`}>
+                <span className={styles.routeBoxIcon}>🔍</span>
+                <div className={styles.routeBoxContent}>
+                  <span className={styles.routeBoxTitle}>Symbol Definition</span>
+                  <span className={styles.routeBoxDesc}>View callers, callees & clone clusters</span>
+                </div>
+                <span className={styles.routeBoxArrow}>→</span>
+              </Link>
+
+              <Link className={styles.routeBox} href={`/symbols/${selectedNode.symbolId}/graph`}>
+                <span className={styles.routeBoxIcon}>📊</span>
+                <div className={styles.routeBoxContent}>
+                  <span className={styles.routeBoxTitle}>Symbol Call Graph</span>
+                  <span className={styles.routeBoxDesc}>2-way callers and callees tree</span>
+                </div>
+                <span className={styles.routeBoxArrow}>→</span>
+              </Link>
+
+              {!selectedNode.isTarget && (
+                <Link className={`${styles.routeBox} ${styles.routeBoxPrimary}`} href={`/impact?symbol=${selectedNode.symbolId}`}>
+                  <span className={styles.routeBoxIcon}>⚡</span>
+                  <div className={styles.routeBoxContent}>
+                    <span className={styles.routeBoxTitle}>Analyse This Impact</span>
+                    <span className={styles.routeBoxDesc}>Re-center workflow on this caller</span>
+                  </div>
+                  <span className={styles.routeBoxArrow}>→</span>
+                </Link>
+              )}
+
+              <Link
+                className={styles.routeBox}
+                href={`/repositories/${selectedNode.repoId}/files/${encodePath(selectedNode.path)}`}
+              >
+                <span className={styles.routeBoxIcon}>📁</span>
+                <div className={styles.routeBoxContent}>
+                  <span className={styles.routeBoxTitle}>Source Code File</span>
+                  <span className={styles.routeBoxDesc}>Open in repository file viewer</span>
+                </div>
+                <span className={styles.routeBoxArrow}>→</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Callers and Callees Interactive Box Lists */}
           <div className={styles.inspectorPaths}>
             <div className={styles.pathColumn}>
-              <div className={styles.pathHeading}>
+              <div className={styles.routeSectionTitle}>
                 Incoming Callers ({upstreamCallers.length}):
               </div>
               {upstreamCallers.length === 0 ? (
-                <span className={styles.nodeSub}>Root entry point / no earlier callers in this path</span>
+                <span className={styles.nodeSub}>Root entry point / no upstream callers in this path</span>
               ) : (
-                <ul className={styles.pathList}>
+                <div className={styles.relationBoxGrid}>
                   {upstreamCallers.map((cid) => {
                     const cNode = layout.nodeMap.get(cid);
                     return (
-                      <li key={cid} className={styles.pathItem}>
-                        <button
-                          type="button"
-                          className={styles.pathItemBtn}
-                          onClick={() => setSelectedNodeId(cid)}
-                        >
-                          {cNode ? cNode.name : `#${cid}`}
-                        </button>
-                      </li>
+                      <div key={cid} className={styles.relationBoxTile}>
+                        <div className={styles.relationSymbolInfo}>
+                          <button
+                            type="button"
+                            className={styles.relationSymbolBtn}
+                            onClick={() => focusNode(cid)}
+                            title="Focus in workflow graph"
+                          >
+                            {cNode ? cNode.name : `#${cid}`}
+                          </button>
+                          {cNode && (
+                            <span className={styles.badgePill} style={{ fontSize: "9px", padding: "1px 5px", background: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", borderRadius: "4px" }}>
+                              {cNode.kind}
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.relationActions}>
+                          <button
+                            type="button"
+                            className={styles.relationBtnFocus}
+                            onClick={() => focusNode(cid)}
+                          >
+                            🎯 Focus
+                          </button>
+                          <Link className={styles.relationBtnLink} href={`/symbols/${cid}`}>
+                            Symbol ↗
+                          </Link>
+                        </div>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
 
             <div className={styles.pathColumn}>
-              <div className={styles.pathHeading}>
+              <div className={styles.routeSectionTitle}>
                 Outgoing Callees ({downstreamCallees.length}):
               </div>
               {downstreamCallees.length === 0 ? (
-                <span className={styles.nodeSub}>Leaves / target endpoint reached</span>
+                <span className={styles.nodeSub}>Modified target endpoint reached / leaves</span>
               ) : (
-                <ul className={styles.pathList}>
+                <div className={styles.relationBoxGrid}>
                   {downstreamCallees.map((cid) => {
                     const cNode = layout.nodeMap.get(cid);
                     return (
-                      <li key={cid} className={styles.pathItem}>
-                        <button
-                          type="button"
-                          className={styles.pathItemBtn}
-                          onClick={() => setSelectedNodeId(cid)}
-                        >
-                          {cNode ? cNode.name : `#${cid}`}
-                        </button>
-                      </li>
+                      <div key={cid} className={styles.relationBoxTile}>
+                        <div className={styles.relationSymbolInfo}>
+                          <button
+                            type="button"
+                            className={styles.relationSymbolBtn}
+                            onClick={() => focusNode(cid)}
+                            title="Focus in workflow graph"
+                          >
+                            {cNode ? cNode.name : `#${cid}`}
+                          </button>
+                          {cNode && (
+                            <span className={styles.badgePill} style={{ fontSize: "9px", padding: "1px 5px", background: "#fdf4ff", color: "#a21caf", border: "1px solid #f0abfc", borderRadius: "4px" }}>
+                              {cNode.kind}
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.relationActions}>
+                          <button
+                            type="button"
+                            className={styles.relationBtnFocus}
+                            onClick={() => focusNode(cid)}
+                          >
+                            🎯 Focus
+                          </button>
+                          <Link className={styles.relationBtnLink} href={`/symbols/${cid}`}>
+                            Symbol ↗
+                          </Link>
+                        </div>
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               )}
             </div>
           </div>

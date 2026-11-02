@@ -65,7 +65,34 @@ function readParams(raw: Record<string, string | string[] | undefined>) {
   };
 }
 
-function CallPath({ row, names, target }: { row: ImpactRow; names: Map<number, string>; target: SymbolDetail }) {
+function CallPath({
+  row,
+  names,
+  target,
+  pills = false,
+}: {
+  row: ImpactRow;
+  names: Map<number, string>;
+  target: SymbolDetail;
+  pills?: boolean;
+}) {
+  if (pills) {
+    return (
+      <ol className={impactStyles.pathPills} aria-label="Call path">
+        {row.callPath.map((id, i) =>
+          id === target.symbolId ? (
+            <li key={`${i}-${id}`} className={impactStyles.pathPillTarget}>
+              🎯 {target.name}
+            </li>
+          ) : (
+            <li key={`${i}-${id}`} className={impactStyles.pathPill}>
+              <Link href={`/symbols/${id}`}>{names.get(id) ?? `#${id}`}</Link>
+            </li>
+          ),
+        )}
+      </ol>
+    );
+  }
   return (
     <ol className={impactStyles.path} aria-label="Call path">
       {row.callPath.map((id, i) =>
@@ -111,13 +138,32 @@ async function Results({
         <KindBadge kind={target.kind} />
         {target.isEntryPoint && <EntryBadge />}
       </div>
-      <p className={styles.lede}>
-        <Link className={styles.mono} href={fileHref}>
-          {target.path}
-        </Link>{" "}
-        lines {target.startLine} to {target.endLine} in {target.repoName}.{" "}
-        <Link href={`/symbols/${target.symbolId}/graph`}>Open the call graph</Link>
-      </p>
+      <div className={impactStyles.actionBoxGrid}>
+        <Link className={impactStyles.actionBox} href={`/symbols/${target.symbolId}/graph`}>
+          <span className={impactStyles.actionBoxIcon} aria-hidden="true">📊</span>
+          <div className={impactStyles.actionBoxContent}>
+            <span className={impactStyles.actionBoxTitle}>Open Call Graph</span>
+            <span className={impactStyles.actionBoxDesc}>Interactive bidirectional call tree</span>
+          </div>
+          <span className={impactStyles.actionBoxArrow} aria-hidden="true">→</span>
+        </Link>
+        <Link className={impactStyles.actionBox} href={fileHref}>
+          <span className={impactStyles.actionBoxIcon} aria-hidden="true">📄</span>
+          <div className={impactStyles.actionBoxContent}>
+            <span className={impactStyles.actionBoxTitle}>{target.path}</span>
+            <span className={impactStyles.actionBoxDesc}>Lines {target.startLine}–{target.endLine} in {target.repoName}</span>
+          </div>
+          <span className={impactStyles.actionBoxArrow} aria-hidden="true">→</span>
+        </Link>
+        <Link className={impactStyles.actionBox} href={`/symbols/${target.symbolId}`}>
+          <span className={impactStyles.actionBoxIcon} aria-hidden="true">🔍</span>
+          <div className={impactStyles.actionBoxContent}>
+            <span className={impactStyles.actionBoxTitle}>Symbol Definition & Clones</span>
+            <span className={impactStyles.actionBoxDesc}>References, callers, callees & metrics</span>
+          </div>
+          <span className={impactStyles.actionBoxArrow} aria-hidden="true">→</span>
+        </Link>
+      </div>
 
       <form className={impactStyles.controls} method="get">
         <input type="hidden" name="symbol" value={target.symbolId} />
@@ -189,20 +235,38 @@ async function Results({
           <ImpactView target={target} rows={rows}>
             {entryPoints.length > 0 && (
               <section className={impactStyles.entryPoints} aria-labelledby="entry-heading">
-                <h2 id="entry-heading">Entry points that reach {target.name}</h2>
-                <ul>
+                <h2 id="entry-heading">⚡ External entry points reaching {target.name} ({entryPoints.length})</h2>
+                <div className={impactStyles.entryBoxGrid}>
                   {entryPoints.map((r) => (
-                    <li key={r.symbolId}>
-                      <Link className={styles.mono} href={`/symbols/${r.symbolId}`}>
-                        {r.name}
-                      </Link>{" "}
-                      <span className={styles.muted}>
-                        in {r.path}, {plural(r.depth, "step")} away
-                      </span>
-                      <CallPath row={r} names={names} target={target} />
-                    </li>
+                    <div key={r.symbolId} className={impactStyles.entryBoxCard}>
+                      <div className={impactStyles.entryBoxHeader}>
+                        <div className={impactStyles.entryBoxTitleArea}>
+                          <span className={impactStyles.entryPillBadge}>⚡ ENTRY POINT</span>
+                          <Link className={impactStyles.entrySymbolLink} href={`/symbols/${r.symbolId}`}>
+                            {r.name}
+                          </Link>
+                          <KindBadge kind={r.kind} />
+                        </div>
+                        <span className={impactStyles.distanceChip}>{plural(r.depth, "step")} away</span>
+                      </div>
+                      <div className={impactStyles.entryBoxMeta}>
+                        📁 {r.path}
+                      </div>
+                      <div className={impactStyles.entryPathBox}>
+                        <span className={impactStyles.pathLabel}>Call Path Sequence:</span>
+                        <CallPath row={r} names={names} target={target} pills />
+                      </div>
+                      <div className={impactStyles.entryCardActions}>
+                        <Link className={impactStyles.entryActionBtn} href={`/symbols/${r.symbolId}`}>
+                          View symbol details →
+                        </Link>
+                        <Link className={impactStyles.entryActionBtn} href={`/impact?symbol=${r.symbolId}`}>
+                          Analyse impact from here →
+                        </Link>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </section>
             )}
 
@@ -347,8 +411,11 @@ export default async function ImpactPage({ searchParams }: { searchParams: Searc
                       </td>
                       <td>{repositories.find((r) => r.repoId === h.repoId)?.name ?? h.repoId}</td>
                       <td className={styles.num}>
-                        <Link href={impactHref({ symbol: h.symbolId, q, repo: repoId, depth, min: min || undefined })}>
-                          {h.symbolId === symbolId ? "Showing" : "Analyse"}
+                        <Link
+                          className={`${styles.button} ${h.symbolId === symbolId ? styles.buttonQuiet : ""}`}
+                          href={impactHref({ symbol: h.symbolId, q, repo: repoId, depth, min: min || undefined })}
+                        >
+                          {h.symbolId === symbolId ? "Selected" : "Analyse impact →"}
                           <span className={styles.visuallyHidden}> {h.name}</span>
                         </Link>
                       </td>
