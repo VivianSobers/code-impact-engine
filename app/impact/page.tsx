@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Confidence, EntryBadge, KindBadge } from "@/components/structure/badges";
+import { ImpactView } from "@/components/structure/ImpactView";
 import impactStyles from "@/components/structure/impact.module.css";
 import { Shell } from "@/components/structure/Shell";
 import styles from "@/components/structure/structure.module.css";
@@ -185,81 +186,83 @@ async function Results({
             </ul>
           </div>
 
-          {entryPoints.length > 0 && (
-            <section className={impactStyles.entryPoints} aria-labelledby="entry-heading">
-              <h2 id="entry-heading">Entry points that reach {target.name}</h2>
-              <ul>
-                {entryPoints.map((r) => (
-                  <li key={r.symbolId}>
-                    <Link className={styles.mono} href={`/symbols/${r.symbolId}`}>
-                      {r.name}
-                    </Link>{" "}
-                    <span className={styles.muted}>
-                      in {r.path}, {plural(r.depth, "step")} away
-                    </span>
-                    <CallPath row={r} names={names} target={target} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          <ImpactView target={target} rows={rows}>
+            {entryPoints.length > 0 && (
+              <section className={impactStyles.entryPoints} aria-labelledby="entry-heading">
+                <h2 id="entry-heading">Entry points that reach {target.name}</h2>
+                <ul>
+                  {entryPoints.map((r) => (
+                    <li key={r.symbolId}>
+                      <Link className={styles.mono} href={`/symbols/${r.symbolId}`}>
+                        {r.name}
+                      </Link>{" "}
+                      <span className={styles.muted}>
+                        in {r.path}, {plural(r.depth, "step")} away
+                      </span>
+                      <CallPath row={r} names={names} target={target} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
-          {summary.byDepth.map((band) => (
-            <section
-              key={band.depth}
-              className={impactStyles.band}
-              style={{ "--band": heat(band.depth) } as React.CSSProperties}
-              aria-labelledby={`band-${band.depth}`}
-            >
-              <h2 id={`band-${band.depth}`} className={impactStyles.bandTitle}>
-                {band.depth === 1 ? "Direct callers" : `Callers ${band.depth} steps away`}
-                <span>{plural(band.count, "symbol")}</span>
-              </h2>
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th scope="col">Symbol</th>
-                      <th scope="col">Kind</th>
-                      <th scope="col">Call path</th>
-                      <th scope="col" className={styles.num}>
-                        Confidence
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows
-                      .filter((r) => r.depth === band.depth)
-                      .map((r) => (
-                        <tr key={r.symbolId}>
-                          <th scope="row">
-                            <Link className={styles.mono} href={`/symbols/${r.symbolId}`}>
-                              {r.name}
-                            </Link>{" "}
-                            {r.isEntryPoint && <EntryBadge />}
-                            <Link
-                              className={`${styles.sub} ${styles.mono}`}
-                              href={`/repositories/${r.repoId}/files/${encodePath(r.path)}`}
-                            >
-                              {r.path}
-                            </Link>
-                          </th>
-                          <td>
-                            <KindBadge kind={r.kind} />
-                          </td>
-                          <td>
-                            <CallPath row={r} names={names} target={target} />
-                          </td>
-                          <td className={styles.num}>
-                            <Confidence value={r.minConfidence} />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          ))}
+            {summary.byDepth.map((band) => (
+              <section
+                key={band.depth}
+                className={impactStyles.band}
+                style={{ "--band": heat(band.depth) } as React.CSSProperties}
+                aria-labelledby={`band-${band.depth}`}
+              >
+                <h2 id={`band-${band.depth}`} className={impactStyles.bandTitle}>
+                  {band.depth === 1 ? "Direct callers" : `Callers ${band.depth} steps away`}
+                  <span>{plural(band.count, "symbol")}</span>
+                </h2>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th scope="col">Symbol</th>
+                        <th scope="col">Kind</th>
+                        <th scope="col">Call path</th>
+                        <th scope="col" className={styles.num}>
+                          Confidence
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows
+                        .filter((r) => r.depth === band.depth)
+                        .map((r) => (
+                          <tr key={r.symbolId}>
+                            <th scope="row">
+                              <Link className={styles.mono} href={`/symbols/${r.symbolId}`}>
+                                {r.name}
+                              </Link>{" "}
+                              {r.isEntryPoint && <EntryBadge />}
+                              <Link
+                                className={`${styles.sub} ${styles.mono}`}
+                                href={`/repositories/${r.repoId}/files/${encodePath(r.path)}`}
+                              >
+                                {r.path}
+                              </Link>
+                            </th>
+                            <td>
+                              <KindBadge kind={r.kind} />
+                            </td>
+                            <td>
+                              <CallPath row={r} names={names} target={target} />
+                            </td>
+                            <td className={styles.num}>
+                              <Confidence value={r.minConfidence} />
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ))}
+          </ImpactView>
         </>
       )}
     </section>
