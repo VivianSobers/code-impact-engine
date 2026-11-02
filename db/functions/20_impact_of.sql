@@ -39,7 +39,7 @@ BEGIN
         FROM reach r
         GROUP BY r.sid
     ),
-    layered_edge AS (
+    layered_edge AS MATERIALIZED (
         SELECT c.caller_id, c.callee_id, max(c.resolution_confidence) AS conf
         FROM calls c
         JOIN shallowest up ON up.sid = c.caller_id
