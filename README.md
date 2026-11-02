@@ -9,3 +9,10 @@ The engine ingests a Git repository, parses its source into files, symbols, call
 - Where is code duplicated across the repo?
 - Which function does what I am describing, even if I don't know its name?
 
+## Stack
+
+- PostgreSQL 16 for the relational core (repos, files, symbols, calls, commits, users)
+- pgvector for symbol embeddings, clone detection and semantic search
+- MongoDB for per-file ASTs
+- Next.js (App Router, TypeScript) for the web app and API
+
