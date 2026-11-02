@@ -174,4 +174,70 @@ BEGIN
     END IF;
 END $$;
 
+-- clone_cluster and waives
+
+INSERT INTO symbol (repo_id, path, name, kind, start_line, end_line)
+VALUES
+    (pg_temp.repo(), 'src/money.ts', 'roundTotal', 'function', 14, 18),
+    (pg_temp.repo(), 'src/money.ts', 'roundTax', 'function', 20, 24);
+
+INSERT INTO clone_cluster (similarity_score) VALUES (0.970);
+
+CREATE FUNCTION pg_temp.cluster() RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT max(cluster_id) FROM clone_cluster
+$$;
+
+CREATE FUNCTION pg_temp.usr(p_name text) RETURNS bigint
+LANGUAGE sql STABLE AS $$
+    SELECT user_id FROM app_user WHERE username = p_name
+$$;
+
+UPDATE symbol SET cluster_id = pg_temp.cluster() WHERE name IN ('roundTotal', 'roundTax');
+
+DO $$
+BEGIN
+    IF (SELECT status FROM clone_cluster WHERE cluster_id = pg_temp.cluster()) <> 'open' THEN
+        RAISE EXCEPTION 'a new cluster should be open';
+    END IF;
+END $$;
+
+SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score) VALUES (1.2)$q$, '23514', 'clone_cluster_score_range');
+SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score, status) VALUES (0.9, 'merged')$q$, '23514', 'clone_cluster_status_known');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO clone_cluster (similarity_score, status) VALUES (0.9, 'confirmed')$q$,
+    '23514', 'clone_cluster_reviewed_when_closed');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO clone_cluster (similarity_score, reviewed_at) VALUES (0.9, now())$q$,
+    '23514', 'clone_cluster_reviewed_when_closed');
+
+INSERT INTO waives (user_id, symbol_id, reason)
+VALUES (pg_temp.usr('admin.ana'), pg_temp.sym('roundTax'), 'Tax rounding rules differ by region');
+
+SELECT pg_temp.rejects(format(
+    $q$INSERT INTO waives (user_id, symbol_id, reason) VALUES (%s, %s, '  ok ')$q$,
+    pg_temp.usr('dev.ben'), pg_temp.sym('roundTax')), '23514', 'waives_reason_length');
+
+-- Deleting a symbol removes its waivers.
+DELETE FROM symbol WHERE symbol_id = pg_temp.sym('roundTax');
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM waives) THEN
+        RAISE EXCEPTION 'deleting a symbol should delete its waivers';
+    END IF;
+END $$;
+
+-- Deleting a reviewer keeps the review but forgets who made it.
+INSERT INTO clone_cluster (similarity_score, status, reviewed_by, reviewed_at)
+VALUES (0.95, 'dismissed', pg_temp.usr('admin.ana'), now());
+DELETE FROM app_user WHERE username = 'admin.ana';
+
+DO $$
+BEGIN
+    IF (SELECT reviewed_by FROM clone_cluster WHERE status = 'dismissed') IS NOT NULL THEN
+        RAISE EXCEPTION 'deleting a user should clear reviewed_by';
+    END IF;
+END $$;
+
 ROLLBACK;
