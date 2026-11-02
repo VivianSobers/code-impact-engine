@@ -37,8 +37,8 @@ export const confidence = {
   staticMember: 0.8,
   unique: 0.6,
   ambiguous: 0.5,
-  memberUnique: 0.5,
-  memberAmbiguous: 0.4,
+  memberUnique: 0.4,
+  memberAmbiguous: 0.3,
   floor: 0.1,
 };
 

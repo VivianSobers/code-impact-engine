@@ -88,12 +88,14 @@ describe("call resolution", () => {
     const project = await buildProject({
       "a.py": `def unique_helper():\n    pass\n\n\ndef shared():\n    pass\n`,
       "b.py": `def shared():\n    pass\n`,
-      "c.py": `def run(thing):\n    unique_helper()\n    shared()\n    thing.missing()\n`,
+      "c.py": `def run(thing):\n    unique_helper()\n    shared()\n    thing.missing()\n    thing.refresh()\n`,
+      "d.py": `class Cache:\n    def refresh(self):\n        pass\n`,
     });
     assert.equal(project.edge("c.py#run", "a.py#unique_helper")?.confidence, 0.6);
     assert.equal(project.edge("c.py#run", "a.py#shared")?.confidence, 0.25);
     assert.equal(project.edge("c.py#run", "b.py#shared")?.confidence, 0.25);
-    assert.equal(project.calls.length, 3);
+    assert.equal(project.edge("c.py#run", "d.py#refresh")?.confidence, 0.4);
+    assert.equal(project.calls.length, 4);
   });
 
   it("drops calls into third-party imports and built-in members", async () => {
