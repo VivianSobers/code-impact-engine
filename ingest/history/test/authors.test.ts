@@ -56,6 +56,17 @@ describe("groupAuthors", () => {
     ]);
   });
 
+  it("does not merge different people who both left the email empty", () => {
+    const authors = groupAuthors([
+      commit("Ana", "", "2026-09-01T00:00:00Z"),
+      commit("Ben", "", "2026-09-02T00:00:00Z"),
+    ]);
+    assert.deepEqual(authors, [
+      { name: "Ana", company: null, emails: [] },
+      { name: "Ben", company: null, emails: [] },
+    ]);
+  });
+
   it("uses the email as the name when a commit has no author name", () => {
     assert.deepEqual(groupAuthors([commit("", "anon@example.org", "2026-09-01T00:00:00Z")]), [
       { name: "anon@example.org", company: "Example", emails: ["anon@example.org"] },
