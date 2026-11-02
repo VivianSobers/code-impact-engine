@@ -2,10 +2,11 @@
   overflow: auto;
   max-height: 78vh;
   background:
-    radial-gradient(circle, #d9dfdc 1px, transparent 1.2px) 0 0 / 18px 18px,
-    var(--surface);
+    radial-gradient(circle, #cbd5e1 1.2px, transparent 1.2px) 0 0 / 22px 22px,
+    #ffffff;
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .svg {
@@ -17,12 +18,15 @@
 
 .columnLabel {
   font-size: 12px;
+  font-weight: 600;
   fill: var(--muted);
+  letter-spacing: 0.03em;
 }
 
 .edge {
   fill: none;
-  stroke: var(--ink);
+  stroke: #64748b;
+  transition: stroke 0.15s ease;
 }
 
 .edgeBack {
@@ -30,18 +34,23 @@
 }
 
 .arrow {
-  fill: var(--ink);
-  fill-opacity: 0.7;
+  fill: #64748b;
+  fill-opacity: 0.85;
 }
 
 .node rect:first-of-type {
   fill: var(--surface);
   stroke: var(--rule-strong);
-  stroke-width: 1;
+  stroke-width: 1.5;
+  rx: 6px;
+  ry: 6px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.03));
+  transition: all 0.15s ease;
 }
 
 .node:hover rect:first-of-type {
-  stroke: var(--ink);
+  stroke: var(--link);
+  filter: drop-shadow(0 4px 10px rgba(99, 102, 241, 0.25));
 }
 
 .node:focus-visible {
@@ -56,7 +65,7 @@
 .name {
   font-family: var(--mono);
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 600;
   fill: var(--ink);
 }
 
@@ -66,8 +75,9 @@
 }
 
 .root rect:first-of-type {
-  fill: var(--ink);
-  stroke: var(--ink);
+  fill: #0f172a;
+  stroke: #0f172a;
+  filter: drop-shadow(0 4px 12px rgba(15, 23, 42, 0.3));
 }
 
 .root .name {
@@ -75,23 +85,27 @@
 }
 
 .root .path {
-  fill: #b9c3cc;
+  fill: #94a3b8;
 }
 
 .entry rect:first-of-type {
-  stroke: var(--link);
+  stroke: #dc2626;
 }
 
 .entryMark {
-  fill: var(--link);
+  fill: #dc2626;
+  rx: 2px;
 }
 
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.75rem;
-  margin: 0.75rem 0 0;
-  padding: 0;
+  gap: 0.6rem 1.75rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
   list-style: none;
   font-size: 0.82rem;
   color: var(--muted);
@@ -121,16 +135,17 @@
 }
 
 .swatchEntry {
-  width: 0.3rem;
+  width: 0.35rem;
   height: 1rem;
   border: 0;
-  background: var(--link);
+  background: #dc2626;
+  border-radius: 2px;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   gap: 0.9rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }

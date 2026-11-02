@@ -4,9 +4,14 @@
 .filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  gap: 0.75rem;
-  margin: 0 0 1.75rem;
+  align-items: flex-end;
+  gap: 0.85rem;
+  margin: 0 0 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .filters label {
@@ -15,32 +20,46 @@
 
 .tiles {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
   margin: 0;
 }
 
 .tile {
-  padding: 0.9rem 1rem;
+  padding: 1.1rem 1.35rem;
   background: var(--surface);
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--rule-strong);
+  box-shadow: 0 8px 18px -4px rgba(0, 0, 0, 0.06);
 }
 
 .tile dt {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--muted);
 }
 
 .tile dd {
-  margin: 0.25rem 0 0;
-  font-size: 1.6rem;
-  font-weight: 600;
+  margin: 0.35rem 0 0;
+  font-size: 1.85rem;
+  font-weight: 700;
   line-height: 1.2;
+  color: var(--ink);
+  letter-spacing: -0.02em;
 }
 
 .tile a {
   color: inherit;
+  text-decoration: none;
 }
 
 .split {
@@ -64,23 +83,25 @@
 
 .added {
   color: var(--ok);
+  font-weight: 600;
 }
 
 .removed {
   color: var(--error);
+  font-weight: 600;
 }
 
-/* Ranked horizontal bars: name, bar, value. One hue (#2a6fb0, checked with the
-   dataviz palette validator against the light surface). */
+/* Ranked horizontal bars: name, bar, value. Modern indigo/purple tone */
 .chart {
-  --bar: #2a6fb0;
-  --bar-hover: #3f84c6;
+  --bar: #6366f1;
+  --bar-hover: #4f46e5;
   margin: 0;
-  padding: 0.9rem 1rem 0.75rem;
+  padding: 1rem 1.25rem;
   background: var(--surface);
   border: 1px solid var(--rule);
-  border-radius: 4px;
+  border-radius: 12px;
   list-style: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .barRow {
@@ -88,8 +109,8 @@
   display: grid;
   grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.3rem 0;
+  gap: 0.85rem;
+  padding: 0.4rem 0;
   font-size: 0.875rem;
   outline-offset: 2px;
 }
@@ -98,47 +119,53 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .barTrack {
-  height: 16px;
-  border-left: 1px solid var(--rule-strong);
+  height: 18px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .bar {
   display: block;
   height: 100%;
-  min-width: 2px;
-  background: var(--bar);
-  border-radius: 0 4px 4px 0;
+  min-width: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 6px;
+  transition: width 0.3s ease;
 }
 
 .barValue {
   min-width: 3.5rem;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  font-weight: 600;
   color: var(--muted);
 }
 
 .barRow:hover .bar,
 .barRow:focus-visible .bar {
-  background: var(--bar-hover);
+  background: linear-gradient(90deg, #4f46e5, #7c3aed);
 }
 
 .tooltip {
   position: absolute;
-  z-index: 2;
+  z-index: 20;
   left: 10.75rem;
-  bottom: calc(100% - 0.2rem);
+  bottom: calc(100% + 0.35rem);
   display: none;
-  padding: 0.45rem 0.6rem;
-  background: var(--ink);
+  padding: 0.55rem 0.8rem;
+  background: #0f172a;
   color: #fff;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 0.8rem;
   line-height: 1.35;
   white-space: nowrap;
   pointer-events: none;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
 }
 
 .tooltip strong {
@@ -151,17 +178,18 @@
 }
 
 .tableToggle {
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
   font-size: 0.875rem;
 }
 
 .tableToggle summary {
   cursor: pointer;
   color: var(--link);
+  font-weight: 600;
 }
 
 .tableToggle > div {
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
 }
 
 .pager {
@@ -169,7 +197,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-top: 0.9rem;
+  margin-top: 1.25rem;
   font-size: 0.875rem;
   color: var(--muted);
 }
@@ -188,10 +216,11 @@
 
 .badge {
   display: inline-block;
-  padding: 0.05rem 0.4rem;
-  border-radius: 3px;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
   background: var(--wash);
   font-size: 0.75rem;
+  font-weight: 600;
   color: var(--muted);
 }
 

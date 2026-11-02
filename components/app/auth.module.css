@@ -1,31 +1,61 @@
 .page {
-  display: grid;
-  place-items: center;
-  padding: 2rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+    var(--paper, #f8fafc);
 }
 
 .card {
-  width: min(100%, 24rem);
-  margin-top: 12vh;
+  width: min(100%, 26rem);
+  padding: 2.25rem 2rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .brand {
-  margin: 0 0 1.5rem;
-  font-family: var(--mono);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  font-family: var(--sans);
   font-size: 0.95rem;
-  font-weight: 500;
+  font-weight: 700;
+  color: #6366f1;
+  letter-spacing: -0.01em;
+}
+
+.brand::before {
+  content: "⚡";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-size: 0.75rem;
+  border-radius: 6px;
 }
 
 .form {
   display: grid;
-  gap: 1rem;
-  margin-top: 1.25rem;
-  padding: 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  gap: 1.15rem;
+  margin-top: 1.5rem;
+  padding: 0;
+  background: transparent;
+  border: none;
 }
 
 .form button {
-  justify-self: start;
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
 }
