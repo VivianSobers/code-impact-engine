@@ -203,7 +203,7 @@ BEGIN
 END $$;
 
 SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score) VALUES (1.2)$q$, '23514', 'clone_cluster_score_range');
-SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score, status) VALUES (0.9, 'merged')$q$, '23514', 'clone_cluster_status_known');
+SELECT pg_temp.rejects($q$INSERT INTO clone_cluster (similarity_score, status, reviewed_at) VALUES (0.9, 'merged', now())$q$, '23514', 'clone_cluster_status_known');
 SELECT pg_temp.rejects(
     $q$INSERT INTO clone_cluster (similarity_score, status) VALUES (0.9, 'confirmed')$q$,
     '23514', 'clone_cluster_reviewed_when_closed');
