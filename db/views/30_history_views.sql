@@ -16,3 +16,29 @@ JOIN commit c ON c.commit_id = m.commit_id
 JOIN symbol s ON s.symbol_id = m.symbol_id
 GROUP BY s.symbol_id, s.repo_id, s.path, s.name, s.kind
 HAVING count(*) >= 2;
+
+-- Who has changed each file the most, measured in changed lines inside its symbols.
+-- share is the author's part of the file's churn; the owner is the author with the
+-- largest share, ties going to the lower author_id.
+CREATE VIEW v_file_ownership AS
+WITH per_author AS (
+    SELECT s.repo_id,
+           s.path,
+           c.author_id,
+           count(DISTINCT c.commit_id)::int     AS commits,
+           sum(m.additions + m.deletions)::int  AS churn
+    FROM modifies m
+    JOIN commit c ON c.commit_id = m.commit_id
+    JOIN symbol s ON s.symbol_id = m.symbol_id
+    GROUP BY s.repo_id, s.path, c.author_id
+)
+SELECT p.repo_id,
+       p.path,
+       p.author_id,
+       a.name AS author_name,
+       p.commits,
+       p.churn,
+       round(p.churn::numeric / sum(p.churn) OVER (PARTITION BY p.repo_id, p.path), 4)::numeric(5,4) AS share,
+       rank() OVER (PARTITION BY p.repo_id, p.path ORDER BY p.churn DESC, p.author_id) = 1           AS is_owner
+FROM per_author p
+JOIN author a ON a.author_id = p.author_id;
