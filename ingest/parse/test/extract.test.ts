@@ -127,6 +127,17 @@ module.exports.helper = helper;
       ["./util", [{ local: "util", imported: "*" }]],
     ]);
     assert.deepEqual(calls(file.facts), ["toCsv -> join @5 [expression]", "toCsv -> map @5 [rows]", "toCsv -> fmt @5 [none]", "helper -> log @9 [util]"]);
+    assert.equal(file.facts.symbols.find((symbol) => symbol.name === "helper")?.exported, true);
+  });
+
+  it("treats functions assigned to object properties as methods of that object", async () => {
+    const file = await parseFile(
+      "lib/response.js",
+      `var res = Object.create(null);\n\nres.send = function send(body) {\n  return this.json(body);\n};\n\nApp.prototype.listen = function () {};\n`,
+    );
+    assert.deepEqual(symbols(file.facts), ["module lib/response.js 1-7", "method res.send 3-5", "method App.listen 7-7"]);
+    assert.equal(file.facts.symbols[1].signature, "res.send = function send(body)");
+    assert.deepEqual(calls(file.facts), ["lib/response.js -> create @1 [Object]", "send -> json @4 [self]"]);
   });
 
   it("treats export-from statements as re-exports", async () => {

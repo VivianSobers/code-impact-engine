@@ -71,18 +71,18 @@ export class JavaScriptExtractor extends Extractor {
     scope: Scope,
     body: SyntaxNode | null,
     descend = true,
-    options: { signatureFrom?: SyntaxNode; exported?: boolean } = {},
+    options: { signatureFrom?: SyntaxNode; exported?: boolean; owner?: string } = {},
   ): void {
     const name = nameNode?.text;
     if (!name) return this.visitChildren(node, scope);
-    const owner = kind === "method" && scope.classBody ? scope.owner : null;
+    const owner = options.owner ?? (kind === "method" && scope.classBody ? scope.owner : null);
     const index = this.addSymbol(node, name, kind, {
       body,
       signatureFrom: options.signatureFrom,
       exported: options.exported ?? this.isExported(node, scope),
       owner,
     });
-    if (descend) this.visitChildren(node, this.enter(scope, index));
+    if (descend) this.visitChildren(node, this.enter(scope, index, options.owner ? { owner: options.owner } : {}));
   }
 
   private declareClass(node: SyntaxNode, nameNode: SyntaxNode | null, scope: Scope, signatureFrom?: SyntaxNode, exported?: boolean): void {
@@ -163,15 +163,19 @@ export class JavaScriptExtractor extends Extractor {
       this.recordType(`this.${left.childForFieldName("property")?.text}`, created);
     }
     const target = this.dottedName(left, memberTypes, ["object", "property"]);
+    const property = left?.type === "member_expression" ? left.childForFieldName("property") : null;
+    const exportMember = !!target && /^(module\.)?exports\./.test(target);
+    if (target && right && property && functionValues.has(right.type)) {
+      const exported = exportMember && scope.symbol === 0;
+      const objectPath = target.slice(0, target.length - property.text.length - 1).replace(/\.prototype$/, "");
+      return this.declare(right, property, exported ? "function" : "method", scope, right.childForFieldName("body"), true, {
+        signatureFrom: node,
+        exported,
+        owner: exported ? undefined : objectPath.split(".").pop(),
+      });
+    }
+    if (scope.symbol === 0 && exportMember && right?.type === "identifier") this.exportedNames.add(right.text);
     if (scope.symbol === 0 && target && right) {
-      const exportTarget = /^(module\.)?exports(\.|$)/.test(target);
-      const property = left?.childForFieldName("property");
-      if (exportTarget && target !== "exports" && target !== "module.exports" && property && functionValues.has(right.type)) {
-        return this.declare(right, property, "function", scope, right.childForFieldName("body"), true, {
-          signatureFrom: node,
-          exported: true,
-        });
-      }
       if ((target === "module.exports" || target === "exports") && right.type === "object") {
         for (const entry of right.namedChildren) {
           if (entry.type === "shorthand_property_identifier") this.exportedNames.add(entry.text);
