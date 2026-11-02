@@ -75,6 +75,14 @@ export default async function SymbolPage({ params }: { params: Params }) {
             </div>
           )}
         </dl>
+        <div className={styles.actions}>
+          <Link className={styles.button} href={`/impact?symbol=${symbol.symbolId}`}>
+            Analyse impact
+          </Link>
+          <Link className={`${styles.button} ${styles.buttonQuiet}`} href={`/symbols/${symbol.symbolId}/graph`}>
+            Open call graph
+          </Link>
+        </div>
       </header>
 
       <div className={styles.split}>
