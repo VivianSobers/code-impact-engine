@@ -89,3 +89,10 @@ Each person writes tests for their own features and presents their own part at t
 5. UI pages, in parallel.
 6. Docs, tests, screenshots and demo prep.
 
+## Working rules
+
+- Commit under your own git identity. Contribution is graded from commit history, so don't commit the other person's work for them.
+- Work on branches named `guru/<topic>` or `vivian/<topic>` and open a PR into `main`. The other person reviews it.
+- Never commit `.env`. Copy `.env.example` and fill in local values.
+- Schema changes to the other person's tables go through them.
+- Every task has a GitHub issue labelled `owner:guru` or `owner:vivian`.
