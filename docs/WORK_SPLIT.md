@@ -21,3 +21,24 @@ In one line each:
 
 That gives three paradigms. The ER diagram and relational schema are in [ER_Relational_Schema.pdf](ER_Relational_Schema.pdf).
 
+## Guru: code structure and impact analysis
+
+Tables: `REPOSITORY`, `FILE`, `SYMBOL`, `CALLS`, `IMPORTS`
+
+Database work:
+- DDL for the tables above, with CHECK constraints (for example `End_Line >= Start_Line`, `LOC >= 0`, `Kind` restricted to a fixed set, `Resolution_Confidence` between 0 and 1) and the composite FK `SYMBOL(Repo_ID, Path) -> FILE`.
+- MongoDB `ast` collection: document model, indexes, and at least two aggregation pipelines (node-type counts per language, deepest nesting per file).
+- Stored function `impact_of(symbol_id, max_depth)`: a recursive CTE that walks `CALLS` backwards and returns every affected symbol and entry point.
+- Full-text search over symbol names and signatures (`tsvector` column + GIN index).
+- Trigger that rejects a symbol whose line span falls outside its file.
+
+Ingestion (`ingest/parse`):
+- Clone a repo, walk its files, parse with tree-sitter, write AST documents to MongoDB, and write files, symbols, calls and imports to Postgres in one transaction per repo.
+- A small seed repo that Vivian can use before the full pipeline is ready.
+
+App:
+- Repository list and "add repository" form.
+- File browser and symbol detail page.
+- Call graph view.
+- Impact analysis page: pick a symbol, see what it affects.
+
