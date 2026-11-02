@@ -147,4 +147,31 @@ BEGIN
     END IF;
 END $$;
 
+-- app_user
+
+INSERT INTO app_user (username, password_hash, role)
+VALUES
+    ('admin.ana', '$2b$12$' || repeat('A', 53), 'admin'),
+    ('dev.ben', '$2b$12$' || repeat('B', 53), 'developer');
+
+SELECT pg_temp.rejects(
+    $q$INSERT INTO app_user (username, password_hash, role) VALUES ('Mallory', '$2b$12$' || repeat('C', 53), 'developer')$q$,
+    '23514', 'app_user_username_format');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO app_user (username, password_hash, role) VALUES ('plain', 'hunter2hunter2', 'developer')$q$,
+    '23514', 'app_user_password_bcrypt');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO app_user (username, password_hash, role) VALUES ('boss', '$2b$12$' || repeat('D', 53), 'root')$q$,
+    '23514', 'app_user_role_known');
+SELECT pg_temp.rejects(
+    $q$INSERT INTO app_user (username, password_hash, role) VALUES ('dev.ben', '$2b$12$' || repeat('E', 53), 'developer')$q$,
+    '23505', 'app_user_username_key');
+
+DO $$
+BEGIN
+    IF (SELECT created_at FROM app_user WHERE username = 'admin.ana') IS NULL THEN
+        RAISE EXCEPTION 'created_at should default to now()';
+    END IF;
+END $$;
+
 ROLLBACK;
