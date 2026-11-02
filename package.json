@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "user:create": "tsx --env-file-if-exists=.env scripts/create-user.ts",
     "test": "node --import tsx --test \"tests/unit/**/*.test.ts\""
   },
   "dependencies": {
