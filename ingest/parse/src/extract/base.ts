@@ -41,6 +41,7 @@ export abstract class Extractor {
       mainGuard: false,
       topLevelCalls: 0,
       defaultExport: null,
+      localTypes: new Map(),
     };
     if (loc > 0) {
       this.facts.symbols.push({
@@ -105,6 +106,12 @@ export abstract class Extractor {
     if (!name || scope.symbol < 0) return;
     this.facts.calls.push({ caller: scope.symbol, name, line: this.lineOf(at), receiver, construct });
     if (scope.symbol === 0) this.facts.topLevelCalls++;
+  }
+
+  protected recordType(name: string | null | undefined, type: string | null | undefined): void {
+    if (!name || !type) return;
+    const known = this.facts.localTypes.get(name);
+    this.facts.localTypes.set(name, known === undefined || known === type ? type : null);
   }
 
   protected addImport(specifier: string, bindings: RawImport["bindings"] = [], reexport = false): void {

@@ -22,6 +22,10 @@ export class JavaScriptExtractor extends Extractor {
       case "public_field_definition":
       case "field_definition":
         return this.field(node, scope);
+      case "required_parameter":
+      case "optional_parameter":
+        this.recordType(this.identifier(node.childForFieldName("pattern")), this.annotatedType(node.childForFieldName("type")));
+        return this.visitChildren(node, scope);
       case "interface_declaration":
         return this.declare(node, node.childForFieldName("name"), "interface", scope, node.childForFieldName("body"), false);
       case "enum_declaration":
@@ -98,7 +102,33 @@ export class JavaScriptExtractor extends Extractor {
     if (value && functionValues.has(value.type)) {
       return this.declare(node, nameNode, "method", scope, value.childForFieldName("body"));
     }
+    const type = this.annotatedType(node.childForFieldName("type")) ?? this.constructed(value);
+    if (nameNode && type) this.recordType(`this.${nameNode.text}`, type);
     this.visitChildren(node, scope);
+  }
+
+  private identifier(node: SyntaxNode | null): string | null {
+    return node?.type === "identifier" ? node.text : null;
+  }
+
+  private typeName(node: SyntaxNode | null): string | null {
+    if (!node) return null;
+    if (node.type === "type_identifier" || node.type === "identifier") return node.text;
+    if (node.type === "generic_type") return this.typeName(node.namedChildren[0] ?? null);
+    if (node.type === "nested_type_identifier") return this.typeName(node.namedChildren[node.namedChildCount - 1] ?? null);
+    return null;
+  }
+
+  private annotatedType(node: SyntaxNode | null): string | null {
+    return node?.type === "type_annotation" ? this.typeName(node.namedChildren[0] ?? null) : null;
+  }
+
+  private constructed(node: SyntaxNode | null): string | null {
+    if (node?.type === "await_expression") return this.constructed(node.namedChildren[0] ?? null);
+    if (node?.type !== "new_expression") return null;
+    const constructor = node.childForFieldName("constructor");
+    if (constructor?.type === "identifier") return constructor.text;
+    return constructor?.type === "member_expression" ? (constructor.childForFieldName("property")?.text ?? null) : null;
   }
 
   private declarator(node: SyntaxNode, scope: Scope): void {
@@ -107,6 +137,9 @@ export class JavaScriptExtractor extends Extractor {
     if (value && this.isRequire(value)) {
       this.addImport(this.stringValue(value.childForFieldName("arguments")?.namedChildren[0] ?? null) ?? "", this.requireBindings(nameNode));
       return;
+    }
+    if (nameNode?.type === "identifier") {
+      this.recordType(nameNode.text, this.annotatedType(node.childForFieldName("type")) ?? this.constructed(value));
     }
     if (nameNode?.type === "identifier" && value) {
       const parent = node.parent;
@@ -124,6 +157,11 @@ export class JavaScriptExtractor extends Extractor {
   private assignment(node: SyntaxNode, scope: Scope): void {
     const left = node.childForFieldName("left");
     const right = node.childForFieldName("right");
+    const created = this.constructed(right);
+    if (created && left?.type === "identifier") this.recordType(left.text, created);
+    if (created && left?.type === "member_expression" && left.childForFieldName("object")?.type === "this") {
+      this.recordType(`this.${left.childForFieldName("property")?.text}`, created);
+    }
     const target = this.dottedName(left, memberTypes, ["object", "property"]);
     if (scope.symbol === 0 && target && right) {
       const exportTarget = /^(module\.)?exports(\.|$)/.test(target);
@@ -242,6 +280,10 @@ export class JavaScriptExtractor extends Extractor {
     if (!node) return { kind: "expression" };
     if (node.type === "this") return { kind: "self" };
     if (node.type === "super") return { kind: "super" };
+    if (node.type === "member_expression" && node.childForFieldName("object")?.type === "this") {
+      const property = node.childForFieldName("property")?.text;
+      return property ? { kind: "name", name: `this.${property}` } : { kind: "expression" };
+    }
     const name = this.dottedName(node, memberTypes, ["object", "property"]);
     return name ? { kind: "name", name } : { kind: "expression" };
   }
