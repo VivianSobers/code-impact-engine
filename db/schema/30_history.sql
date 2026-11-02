@@ -59,3 +59,16 @@ CREATE TABLE modifies (
 );
 
 CREATE INDEX modifies_symbol_idx ON modifies (symbol_id);
+
+-- Application login. Only bcrypt hashes are stored, never the password.
+CREATE TABLE app_user (
+    user_id       bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    username      text        NOT NULL,
+    password_hash text        NOT NULL,
+    role          text        NOT NULL,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT app_user_username_key UNIQUE (username),
+    CONSTRAINT app_user_username_format CHECK (username ~ '^[a-z0-9_.-]{3,32}$'),
+    CONSTRAINT app_user_password_bcrypt CHECK (password_hash ~ '^\$2[aby]\$1[0-4]\$[./A-Za-z0-9]{53}$'),
+    CONSTRAINT app_user_role_known CHECK (role IN ('admin', 'developer'))
+);
