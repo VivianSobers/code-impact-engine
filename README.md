@@ -41,4 +41,5 @@ Setup and run instructions will go here once `docker-compose.yml` and the Next.j
 ## Documentation
 
 - [ER diagram and relational schema](docs/ER_Relational_Schema.pdf)
+- [Database design: mapping, data dictionary and storage choices](docs/DATABASE_DESIGN.md)
 - [Work split between team members](docs/WORK_SPLIT.md)
