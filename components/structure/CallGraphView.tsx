@@ -2,6 +2,8 @@ import type { CallGraph } from "@/lib/structure/graph";
 import { NODE_HEIGHT, NODE_WIDTH, layoutGraph } from "./graphLayout";
 import graph from "./callGraph.module.css";
 
+const MIN_SCALE = 0.75;
+
 function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -18,8 +20,7 @@ export function CallGraphView({ data, title }: { data: CallGraph; title: string 
       <svg
         className={graph.svg}
         viewBox={`0 0 ${layout.width} ${layout.height}`}
-        width={layout.width}
-        height={layout.height}
+        style={{ maxWidth: layout.width, minWidth: Math.round(layout.width * MIN_SCALE) }}
         aria-labelledby="call-graph-title"
       >
         <title id="call-graph-title">{title}</title>
