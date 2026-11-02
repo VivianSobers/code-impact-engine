@@ -13,6 +13,8 @@
     "test": "node --import tsx --test \"tests/unit/**/*.test.ts\""
   },
   "dependencies": {
+    "bcryptjs": "3.0.3",
+    "jose": "6.2.15",
     "mongodb": "6.21.0",
     "next": "15.5.28",
     "pg": "8.23.1",
