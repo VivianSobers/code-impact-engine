@@ -80,3 +80,12 @@ App:
 
 Each person writes tests for their own features and presents their own part at the demo.
 
+## Order of work
+
+1. Setup. Docker Compose (Guru) and the Next.js scaffold with DB clients (Vivian), in parallel.
+2. Schema. Agree on the final `SYMBOL` columns first, since Vivian's tables reference it. Then each writes DDL for their own tables.
+3. Ingestion. Guru's parser comes first and ships the seed repo early. Vivian's history and embedding steps run on top of its output.
+4. Advanced features and API routes, in parallel.
+5. UI pages, in parallel.
+6. Docs, tests, screenshots and demo prep.
+
