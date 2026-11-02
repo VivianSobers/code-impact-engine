@@ -10,15 +10,20 @@ export interface EligibleSymbol {
   endLine: number;
 }
 
-// Functions and methods long enough to compare. Module and class symbols span other
-// symbols and would always look like their own members.
-export function eligible(alias: string): string {
-  return `${alias}.kind IN ('function', 'method') AND ${alias}.end_line - ${alias}.start_line + 1 >= ${MIN_LINES}`;
+// Functions and methods get a vector, so search can find them however short. Module
+// and class symbols span other symbols and would always look like their own members.
+export function embeddable(alias: string): string {
+  return `${alias}.kind IN ('function', 'method')`;
+}
+
+// Clone candidates must also be long enough that matching bodies mean something.
+export function cloneCandidate(alias: string): string {
+  return `${embeddable(alias)} AND ${alias}.end_line - ${alias}.start_line + 1 >= ${MIN_LINES}`;
 }
 
 export async function eligibleSymbols(client: Client, repoId: number): Promise<EligibleSymbol[]> {
   const result = await client.query<{ symbol_id: string; path: string; start_line: number; end_line: number }>(
-    `SELECT symbol_id, path, start_line, end_line FROM symbol s WHERE repo_id = $1 AND ${eligible("s")} ORDER BY symbol_id`,
+    `SELECT symbol_id, path, start_line, end_line FROM symbol s WHERE repo_id = $1 AND ${embeddable("s")} ORDER BY symbol_id`,
     [repoId],
   );
   return result.rows.map((r) => ({ symbolId: Number(r.symbol_id), path: r.path, startLine: r.start_line, endLine: r.end_line }));

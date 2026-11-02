@@ -36,9 +36,9 @@ describe("embedding the seed repo", { skip: skip ?? false }, () => {
     await client.end().catch(() => undefined);
   });
 
-  it("embeds every function and method of four or more lines", async () => {
+  it("embeds every function and method, short ones included", async () => {
     const eligible = await client.query(
-      `SELECT count(*)::int AS n FROM symbol WHERE repo_id = $1 AND kind IN ('function', 'method') AND end_line - start_line + 1 >= 4`,
+      `SELECT count(*)::int AS n FROM symbol WHERE repo_id = $1 AND kind IN ('function', 'method')`,
       [first.repoId],
     );
     assert.equal(first.symbols, eligible.rows[0].n);
@@ -58,7 +58,8 @@ describe("embedding the seed repo", { skip: skip ?? false }, () => {
 
   it("only puts symbols of this repository into clusters of two or more", async () => {
     const rows = await client.query(
-      `SELECT c.cluster_id, count(*)::int AS members, bool_and(s.repo_id = $1) AS same_repo
+      `SELECT c.cluster_id, count(*)::int AS members, bool_and(s.repo_id = $1) AS same_repo,
+              min(s.end_line - s.start_line + 1)::int AS shortest
        FROM clone_cluster c JOIN symbol s USING (cluster_id)
        WHERE c.cluster_id IN (SELECT cluster_id FROM symbol WHERE repo_id = $1)
        GROUP BY c.cluster_id`,
@@ -67,6 +68,7 @@ describe("embedding the seed repo", { skip: skip ?? false }, () => {
     for (const row of rows.rows) {
       assert.ok(row.members >= 2);
       assert.ok(row.same_repo);
+      assert.ok(row.shortest >= 4, "functions under four lines are too short to call clones");
     }
     assert.equal(rows.rowCount, afterReparse.clusters);
   });

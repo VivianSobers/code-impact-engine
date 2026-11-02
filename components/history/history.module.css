@@ -1,0 +1,201 @@
+/* Shared by the dashboard, commit and search pages. Colours come from the .shell
+   tokens in components/structure/structure.module.css. */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+  margin: 0 0 1.75rem;
+}
+
+.filters label {
+  min-width: 12rem;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.tile {
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.tile dt {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tile dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tile a {
+  color: inherit;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.added {
+  color: var(--ok);
+}
+
+.removed {
+  color: var(--error);
+}
+
+/* Ranked horizontal bars: name, bar, value. One hue (#2a6fb0, checked with the
+   dataviz palette validator against the light surface). */
+.chart {
+  --bar: #2a6fb0;
+  --bar-hover: #3f84c6;
+  margin: 0;
+  padding: 0.9rem 1rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  list-style: none;
+}
+
+.barRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(6rem, 10rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.3rem 0;
+  font-size: 0.875rem;
+  outline-offset: 2px;
+}
+
+.barName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  height: 16px;
+  border-left: 1px solid var(--rule-strong);
+}
+
+.bar {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--bar);
+  border-radius: 0 4px 4px 0;
+}
+
+.barValue {
+  min-width: 3.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.barRow:hover .bar,
+.barRow:focus-visible .bar {
+  background: var(--bar-hover);
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  left: 10.75rem;
+  bottom: calc(100% - 0.2rem);
+  display: none;
+  padding: 0.45rem 0.6rem;
+  background: var(--ink);
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.tooltip strong {
+  font-size: 0.9rem;
+}
+
+.barRow:hover .tooltip,
+.barRow:focus-visible .tooltip {
+  display: block;
+}
+
+.tableToggle {
+  margin-top: 0.6rem;
+  font-size: 0.875rem;
+}
+
+.tableToggle summary {
+  cursor: pointer;
+  color: var(--link);
+}
+
+.tableToggle > div {
+  margin-top: 0.6rem;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.pager div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.message {
+  max-width: 48ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 3px;
+  background: var(--wash);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.badgeAdded {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
