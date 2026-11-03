@@ -1,5 +1,11 @@
 # Code Intelligence and Change Impact Analysis Engine
 
+## Demo video
+
+<a href="Code-Impact-Engine-Demo.mp4"><img src="docs/demo-preview.gif" alt="Demo video preview, click to watch" width="800"></a>
+
+[Watch the 3-minute demo video](Code-Impact-Engine-Demo.mp4) (real runs, captions, no audio).
+
 **Read a Git repository into a database, then ask what breaks if you change a function, who changes it, and where it is copied.**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)](package.json)

@@ -2,3 +2,5 @@
 *.sh text eol=lf
 *.sql text eol=lf
 *.pdf binary
+*.mp4 binary
+*.gif binary
