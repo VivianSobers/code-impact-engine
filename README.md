@@ -8,13 +8,18 @@
 
 **Read a Git repository into a database, then ask what breaks if you change a function, who changes it, and where it is copied.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)](package.json)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](package.json)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](docker-compose.yml)
-[![pgvector](https://img.shields.io/badge/vectors-pgvector-336791)](db/schema/31_vectors.sql)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?logo=mongodb&logoColor=white)](docker-compose.yml)
-[![Course](https://img.shields.io/badge/UE23CS351A-DBMS_mini_project-555555)](docs/PROJECT_REPORT.md)
+[![Tests](https://img.shields.io/badge/Tests-202%20Passing%20%C2%B7%200%20Fail-1B5E20?style=for-the-badge&labelColor=43A047)](#tests)
+[![Suites](https://img.shields.io/badge/Suites-Unit%2065%20%C2%B7%20Ingest%2089%20%C2%B7%20API%2040%20%C2%B7%20SQL%208-2E7D32?style=for-the-badge&labelColor=66BB6A)](#tests)
+[![Impact](https://img.shields.io/badge/Impact-Recursive%20CTE%20%C2%B7%20Call%20Graph-B71C1C?style=for-the-badge&labelColor=EF5350)](db/functions/20_impact_of.sql)
+[![Search](https://img.shields.io/badge/Search-pgvector%20HNSW%20%C2%B7%20Cosine-E65100?style=for-the-badge&labelColor=FF9800)](db/schema/31_vectors.sql)
+[![Roles](https://img.shields.io/badge/Roles-Admin%20%C2%B7%20Developer-6A1B9A?style=for-the-badge&labelColor=AB47BC)](lib/auth/access.ts)
+[![Framework](https://img.shields.io/badge/Framework-Next.js%2015%20%C2%B7%20React%2019-000000?style=for-the-badge&labelColor=424242&logo=nextdotjs&logoColor=FFFFFF)](package.json)
+[![Language](https://img.shields.io/badge/Language-TypeScript%205-1565C0?style=for-the-badge&labelColor=42A5F5&logo=typescript&logoColor=FFFFFF)](tsconfig.json)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL%2016-1A237E?style=for-the-badge&labelColor=5C6BC0&logo=postgresql&logoColor=FFFFFF)](docker-compose.yml)
+[![Documents](https://img.shields.io/badge/Documents-MongoDB%207-1B5E20?style=for-the-badge&labelColor=4CAF50&logo=mongodb&logoColor=FFFFFF)](docker-compose.yml)
+[![Parser](https://img.shields.io/badge/Parser-tree--sitter%20%C2%B7%205%20Languages-37474F?style=for-the-badge&labelColor=78909C)](ingest/parse/src/languages.ts)
+[![Course](https://img.shields.io/badge/Course-UE23CS351A%20DBMS-512DA8?style=for-the-badge&labelColor=9575CD)](docs/PROJECT_REPORT.md)
+[![Team](https://img.shields.io/badge/Team-2%20%C2%B7%20PES%20University-B8860B?style=for-the-badge&labelColor=FFD54F)](#team)
 
 UE23CS351A Database Management Systems mini project, PES University, section 5 C.
 Guru R Bharadwaj (PES1UG24CS177) and Vivian Sobers E (PES1UG24CS901).
